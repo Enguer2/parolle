@@ -1,10 +1,12 @@
-
 import useGame from '@/store/useGame'
 
 export default function Board() {
-  const { grid } = useGame()
+  const { grid, wordLength } = useGame()
   return (
-    <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+    <div
+      className="grid gap-2"
+      style={{ gridTemplateColumns: `repeat(${wordLength}, 1fr)` }}
+    >
       {grid.map((row, rIdx) =>
         row.map((cell, cIdx) => (
           <div
