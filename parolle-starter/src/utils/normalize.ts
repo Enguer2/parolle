@@ -1,5 +1,4 @@
-
-export const normalizeCorsican = (s: string) =>
-  s.normalize('NFC')
-    .replace(/[̀-ͯ]/g, '') // strip combining marks
-    .toUpperCase()
+export const toBase = (s: string) =>
+  s.normalize('NFD')
+   .replace(/[\u0300-\u036f]/g, '') // retire les diacritiques
+   .toUpperCase()

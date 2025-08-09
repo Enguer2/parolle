@@ -3,6 +3,15 @@ import { create } from 'zustand'
 type CellState = 'empty' | 'correct' | 'present' | 'absent'
 type Cell = { letter: string; state: CellState }
 
+type KeyState = 'unused' | 'correct' | 'present' | 'absent'
+const rank: Record<KeyState, number> = { correct: 3, present: 2, absent: 1, unused: 0 }
+const bump = (prev: KeyState = 'unused', next: KeyState): KeyState =>
+  rank[next] > rank[prev] ? next : prev
+
+// retire les accents pour agréger sur A–Z (E couvre É/È, etc.)
+const toBase = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+
 type GameState = {
   word: string
   wordLength: number
@@ -12,6 +21,7 @@ type GameState = {
   onKey: (k: string) => void
   setTarget: (w: string, attempts?: number) => void
   reset: () => void
+  keyStatesBase: Record<string, KeyState>
 }
 
 const normalize = (s: string) => s.normalize('NFC').toUpperCase()
@@ -60,6 +70,7 @@ export default create<GameState>((set, get) => ({
   attempts: 6,
   grid: makeGrid(6, 5),
   currentRow: 0,
+  keyStatesBase: {},
 
   setTarget: (w: string, attempts = 6) => {
     const word = normalize(w)
@@ -70,6 +81,7 @@ export default create<GameState>((set, get) => ({
       attempts,
       grid: makeGrid(attempts, len),
       currentRow: 0,
+      keyStatesBase: {},
     })
   },
 
@@ -78,6 +90,7 @@ export default create<GameState>((set, get) => ({
     set({
       grid: makeGrid(attempts, wordLength),
       currentRow: 0,
+      keyStatesBase: {},
     })
   },
 
