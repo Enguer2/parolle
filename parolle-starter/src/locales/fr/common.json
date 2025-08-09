@@ -1,0 +1,24 @@
+{
+  "brand": "PAROLLE",
+  "nav": {
+    "play": "Jouer",
+    "rules": "Règles",
+    "stats": "Stats",
+    "settings": "Réglages",
+    "login": "Connexion"
+  },
+  "home": {
+    "title": "PAROLLE",
+    "playGuest": "Jouer sans connexion",
+    "login": "Connexion"
+  },
+  "howto": {
+    "title": "Comment jouer",
+    "steps": [
+      "Tente de deviner le mot corse du jour.",
+      "Chaque essai colore les lettres : vert (bien placée), jaune (mal placée), gris (absente).",
+      "6 essais maximum. Bona furtuna !"
+    ]
+  },
+  "footer": "© {{year}} Parolle — Wordle corsu"
+}

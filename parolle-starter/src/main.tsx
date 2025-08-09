@@ -9,6 +9,7 @@ import Stats from '@/pages/Stats'
 import HowToPlay from '@/pages/HowToPlay'
 import Settings from '@/pages/Settings'
 import Login from '@/pages/Login'
+import './i18n'
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },

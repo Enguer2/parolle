@@ -1,0 +1,15 @@
+{
+    "brand": "PAROLLE",
+    "nav": { "play": "Play", "rules": "Rules", "stats": "Stats", "settings": "Settings", "login": "Sign in" },
+    "home": { "title": "PAROLLE", "playGuest": "Play as guest", "login": "Sign in" },
+    "howto": {
+      "title": "How to play",
+      "steps": [
+        "Try to guess today’s Corsican word.",
+        "Each attempt colors letters: green (correct spot), yellow (present), gray (absent).",
+        "6 attempts max. Bona furtuna!"
+      ]
+    },
+    "footer": "© {{year}} Parolle — Wordle corsu"
+  }
+  

@@ -1,12 +1,14 @@
+import { useTranslation } from 'react-i18next'
 
 export default function HowToPlay() {
+  const { t } = useTranslation()
+  const steps = t('howto.steps', { returnObjects: true }) as string[]
+
   return (
     <section className="prose prose-invert max-w-xl">
-      <h1>Comment jouer</h1>
+      <h1>{t('howto.title')}</h1>
       <ol>
-        <li>Tente de deviner le mot corse du jour.</li>
-        <li>Chaque essai colore les lettres : vert (bien placée), jaune (mal placée), gris (absente).</li>
-        <li>6 essais maximum. Bona furtuna !</li>
+        {steps.map((s, i) => <li key={i}>{s}</li>)}
       </ol>
     </section>
   )

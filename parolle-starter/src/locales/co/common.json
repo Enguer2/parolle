@@ -1,0 +1,15 @@
+{
+    "brand": "PAROLLE",
+    "nav": { "play": "Giuvà", "rules": "Regule", "stats": "Statìstiche", "settings": "Paràmetri", "login": "Cunnessione" },
+    "home": { "title": "PAROLLE", "playGuest": "Giuvà senza cunnessione", "login": "Cunnessione" },
+    "howto": {
+      "title": "Cumu ghjucà",
+      "steps": [
+        "Prava à truvà a parolla corsa d’oghje.",
+        "Ogni pruva colora e lettere: verde (à u so locu), giallu (presente), grisgiu (assente).",
+        "6 prove massime. Bona furtuna!"
+      ]
+    },
+    "footer": "© {{year}} Parolle — Wordle corsu"
+  }
+  
