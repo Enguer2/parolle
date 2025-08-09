@@ -4,6 +4,8 @@ import { PrismaClient, WordKind } from '@prisma/client'
 
 const prisma = new PrismaClient()
 const app = express()
+const toBase = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
 app.use(cors())
 app.use(express.json())
 
@@ -62,15 +64,42 @@ app.get('/api/daily', async (_req, res) => {
 app.post('/api/guess', async (req, res) => {
   try {
     const { guess } = req.body as { guess: string }
-    if (!guess || typeof guess !== 'string') return res.status(400).json({ error: 'invalid_guess' })
+    if (!guess || typeof guess !== 'string') {
+      return res.status(400).json({ error: 'invalid_guess' })
+    }
     const word = await getAnswerForNow()
     if (!word) return res.status(404).json({ error: 'no_answer' })
-    if (guess.length !== word.length) return res.status(400).json({ error: 'length_mismatch', expected: word.length })
-    const states = scoreGuess(guess, word.text)
+
+    // longueur
+    const norm = normalize(guess)
+    if (norm.length !== word.length) {
+      return res.status(400).json({ error: 'length_mismatch', expected: word.length })
+    }
+
+    // ✅ validation dictionnaire (ANSWER ou GUESS, actif, même longueur)
+    const exists = await prisma.word.findFirst({
+      where: {
+        is_active: true,
+        length: word.length,
+        kind: { in: [WordKind.ANSWER, WordKind.GUESS] },
+        OR: [
+          { text: norm },              // exact (accentué)
+          { text_base: toBase(norm) }, // sans accents
+        ],
+      },
+      select: { id: true },
+    })
+    if (!exists) {
+      return res.status(400).json({ error: 'invalid_word' }) // 👈 mot inconnu
+    }
+
+    // scoring
+    const states = scoreGuess(norm, word.text)
     const result = states.map(s => (s === 'correct' ? 'G' : s === 'present' ? 'Y' : 'B')).join('')
-    res.json({ result })
+    return res.json({ result })
   } catch (e) {
-    console.error(e); res.status(500).json({ error: 'server_error' })
+    console.error(e)
+    res.status(500).json({ error: 'server_error' })
   }
 })
 

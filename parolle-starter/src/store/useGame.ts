@@ -22,6 +22,9 @@ type GameState = {
   setTarget: (w: string, attempts?: number) => void
   reset: () => void
   keyStatesBase: Record<string, KeyState>
+  /** Applique un pattern "GYBBG" renvoyé par l'API à la ligne courante,
+   * met à jour la grille et les couleurs du clavier, puis passe à la ligne suivante. */
+  applyServerResult: (pattern: string) => void
 }
 
 const normalize = (s: string) => s.normalize('NFC').toUpperCase()
@@ -86,7 +89,7 @@ export default create<GameState>((set, get) => ({
   },
 
   reset: () => {
-    const { word, attempts, wordLength } = get()
+    const { attempts, wordLength } = get()
     set({
       grid: makeGrid(attempts, wordLength),
       currentRow: 0,
@@ -96,7 +99,7 @@ export default create<GameState>((set, get) => ({
 
   onKey: (k: string) => {
     const state = get()
-    const { grid, currentRow, wordLength, word } = state
+    const { grid, currentRow, wordLength } = state
     const next = grid.map(r => r.slice())
 
     // Backspace
@@ -110,20 +113,29 @@ export default create<GameState>((set, get) => ({
       return set({ grid: next })
     }
 
-    // Enter
+    // Enter (LOCAL scoring : garde si tu restes 100% client ;
+    // si tu utilises le scoring serveur, ne déclenche pas ça.
     if (k === 'ENTER') {
       const guess = next[currentRow].map(c => c.letter || ' ').join('')
-      if (guess.length < wordLength || next[currentRow].some(c => !c.letter)) {
-        return // ligne incomplète
-      }
+      if (guess.length < wordLength || next[currentRow].some(c => !c.letter)) return
 
       const states = scoreGuess(guess, state.word)
       for (let i = 0; i < wordLength; i++) {
         next[currentRow][i].state = states[i]
       }
 
+      // MAJ clavier A–Z (optionnel en mode local)
+      const base = { ...state.keyStatesBase }
+      for (let i = 0; i < wordLength; i++) {
+        const ch = next[currentRow][i].letter
+        const b = toBase(ch)
+        const st = next[currentRow][i].state as KeyState
+        base[b] = bump(base[b], st)
+      }
+
       return set({
         grid: next,
+        keyStatesBase: base,
         currentRow: Math.min(currentRow + 1, state.attempts - 1),
       })
     }
@@ -138,5 +150,35 @@ export default create<GameState>((set, get) => ({
       }
       return set({ grid: next })
     }
+  },
+
+  applyServerResult: (pattern: string) => {
+    const st = get()
+    const { grid, currentRow, wordLength } = st
+    if (!pattern || pattern.length !== wordLength) return
+
+    const next = grid.map(r => r.slice())
+
+    // 1) Appliquer "G/Y/B" sur la ligne courante
+    for (let i = 0; i < wordLength; i++) {
+      const p = pattern[i]
+      next[currentRow][i].state =
+        p === 'G' ? 'correct' : p === 'Y' ? 'present' : 'absent'
+    }
+
+    // 2) Mettre à jour le clavier A–Z
+    const base = { ...st.keyStatesBase }
+    for (let i = 0; i < wordLength; i++) {
+      const ch = next[currentRow][i].letter
+      const b = toBase(ch)
+      const ks = next[currentRow][i].state as KeyState
+      base[b] = bump(base[b], ks)
+    }
+
+    set({
+      grid: next,
+      keyStatesBase: base,
+      currentRow: Math.min(currentRow + 1, st.attempts - 1),
+    })
   },
 }))

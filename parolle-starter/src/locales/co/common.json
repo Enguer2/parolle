@@ -10,6 +10,12 @@
         "6 prove massime. Bona furtuna!"
       ]
     },
+    "errors": {
+  "incomplete": "Compie a linea nanzu à validà.",
+  "invalid_word": "Parolla scunnisciuta.",
+  "length_mismatch": "Lunghezza micca curretta.",
+  "server_error": "Sbagliu di servitore, ripruvà."
+},
     "footer": "© {{year}} Parolle — Wordle corsu"
   }
   
