@@ -1,0 +1,42 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WordKind {
+  ANSWER
+  GUESS
+}
+
+model Word {
+  id         Int      @id @default(autoincrement())
+  text       String   @db.VarChar(32)
+  text_base  String   @db.VarChar(32)
+  length     Int
+  kind       WordKind
+  difficulty Int      @default(1)
+  def_fr     String?
+  ex_co      String?
+  dialect    String?
+  is_active  Boolean  @default(true)
+
+  // relation inverse
+  dailyAnswers DailyAnswer[]
+
+  @@unique([text, kind], map: "text_kind")
+  @@index([length])
+}
+
+model DailyAnswer {
+  date   DateTime @id
+  wordId Int
+  word   Word     @relation(fields: [wordId], references: [id])
+
+  @@index([wordId])
+}
