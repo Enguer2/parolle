@@ -10,7 +10,7 @@ app.use(cors())
 app.use(express.json())
 
 // 1 minute pour les tests ; passe à 24h en prod
-const BUCKET_MS = 60 * 1000
+const BUCKET_MS = 5 * 60 * 1000
 // const BUCKET_MS = 24 * 60 * 60 * 1000
 
 const normalize = (s: string) => s.normalize('NFC').toUpperCase()
@@ -47,30 +47,42 @@ async function getAnswerForNow() {
   return word
 }
 
+
 app.get('/api/daily', async (_req, res) => {
   try {
     const word = await getAnswerForNow()
     if (!word) return res.status(404).json({ error: 'no_answer' })
+    const bucket = Math.floor(Date.now() / BUCKET_MS)
     res.json({
       length: word.length,
       attemptLimit: Math.max(6, Math.min(10, word.length)),
-      bucketMs: BUCKET_MS,
+      bucket,
+      bucketMs: BUCKET_MS
     })
-  } catch (e) {
-    console.error(e); res.status(500).json({ error: 'server_error' })
-  }
+  } catch (e) { res.status(500).json({ error: 'server_error' }) }
 })
+
+async function getAnswerForBucket(bucket: number) {
+  const total = await prisma.word.count({ where: { kind: WordKind.ANSWER, is_active: true } })
+  if (total === 0) return null
+  const index = bucket % total
+  return prisma.word.findFirst({
+    where: { kind: WordKind.ANSWER, is_active: true },
+    orderBy: { id: 'asc' },
+    skip: index,
+    take: 1,
+  })
+}
 
 app.post('/api/guess', async (req, res) => {
   try {
-    const { guess } = req.body as { guess: string }
-    if (!guess || typeof guess !== 'string') {
-      return res.status(400).json({ error: 'invalid_guess' })
-    }
-    const word = await getAnswerForNow()
+    const { guess, bucket } = req.body as { guess: string; bucket?: number }
+    if (!guess || typeof guess !== 'string') return res.status(400).json({ error: 'invalid_guess' })
+    if (typeof bucket !== 'number') return res.status(400).json({ error: 'server_error' }) // on exige le bucket
+
+    const word = await getAnswerForBucket(bucket)   // 👈 verrouille le mot
     if (!word) return res.status(404).json({ error: 'no_answer' })
 
-    // longueur
     const norm = normalize(guess)
     if (norm.length !== word.length) {
       return res.status(400).json({ error: 'length_mismatch', expected: word.length })
@@ -93,12 +105,10 @@ app.post('/api/guess', async (req, res) => {
       return res.status(400).json({ error: 'invalid_word' }) // 👈 mot inconnu
     }
 
-    // scoring
     const states = scoreGuess(norm, word.text)
     const result = states.map(s => (s === 'correct' ? 'G' : s === 'present' ? 'Y' : 'B')).join('')
     return res.json({ result })
   } catch (e) {
-    console.error(e)
     res.status(500).json({ error: 'server_error' })
   }
 })

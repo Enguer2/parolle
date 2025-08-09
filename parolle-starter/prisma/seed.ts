@@ -6,7 +6,6 @@ const toBase = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').
 async function main() {
   const words = [
     // Mots mystères (ANSWER)
-    { text: 'MARE', kind: 'ANSWER' },       // mer
     { text: 'MONTE', kind: 'ANSWER' },      // monte / montagne
     { text: 'CAMPAGNA', kind: 'ANSWER' },   // campagne
     { text: 'VENTU', kind: 'ANSWER' },      // vent

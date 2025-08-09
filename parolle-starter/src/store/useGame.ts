@@ -19,7 +19,7 @@ type GameState = {
   grid: Cell[][]
   currentRow: number
   onKey: (k: string) => void
-  setTarget: (w: string, attempts?: number) => void
+  setTarget: (w: string) => void
   reset: () => void
   keyStatesBase: Record<string, KeyState>
   /** Applique un pattern "GYBBG" renvoyé par l'API à la ligne courante,
@@ -75,18 +75,20 @@ export default create<GameState>((set, get) => ({
   currentRow: 0,
   keyStatesBase: {},
 
-  setTarget: (w: string, attempts = 6) => {
+  setTarget: (w: string) => {
     const word = normalize(w)
     const len = word.length
+    const FIXED_ATTEMPTS = 6
     set({
       word,
       wordLength: len,
-      attempts,
-      grid: makeGrid(attempts, len),
+      attempts: FIXED_ATTEMPTS,
+      grid: makeGrid(FIXED_ATTEMPTS, len),
       currentRow: 0,
       keyStatesBase: {},
     })
   },
+  
 
   reset: () => {
     const { attempts, wordLength } = get()
