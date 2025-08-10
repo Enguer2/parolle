@@ -47,6 +47,19 @@ async function getAnswerForNow() {
   return word
 }
 
+app.get('/api/solution', async (req, res) => {
+  try {
+    const bucket = Number(req.query.bucket)
+    if (!Number.isFinite(bucket)) return res.status(400).json({ error: 'bad_request' })
+    const word = await getAnswerForBucket(bucket) // même logique que /api/guess
+    if (!word) return res.status(404).json({ error: 'no_answer' })
+    res.json({ text: word.text })
+  } catch (e) {
+    res.status(500).json({ error: 'server_error' })
+  }
+})
+
+
 
 app.get('/api/daily', async (_req, res) => {
   try {

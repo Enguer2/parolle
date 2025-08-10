@@ -31,6 +31,7 @@ async function main() {
     { text: 'PRATU', kind: 'GUESS' },       // pré
     { text: 'GHJATTU', kind: 'GUESS' },     // chat
     { text: 'CAVALLU', kind: 'GUESS' },     // cheval
+    { text: 'ISULETTI', kind: 'GUESS' }, // petites îles
     { text: 'STRADA', kind: 'GUESS' },      // route
     { text: 'FIURE', kind: 'GUESS' },       // fleur
     { text: 'CIPOLLA', kind: 'GUESS' },     // oignon

@@ -2,13 +2,19 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Board from '@/components/Board'
 import Keyboard from '@/components/Keyboard'
+import ResultModal from '@/components/ResultModal'
 import useGame from '@/store/useGame'
 
 const LETTERS = /[A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜÒÌ]/i
 
 export default function Game() {
   const { t } = useTranslation()
-  const { setTarget, onKey, applyServerResult, grid, currentRow, wordLength } = useGame()
+  const {
+    setTarget, onKey, applyServerResult,
+    grid, currentRow, wordLength,
+    gameOver, outcome, solution, setSolution
+  } = useGame()
+
   const [msg, setMsg] = useState<string | null>(null)
   const [bucket, setBucket] = useState<number | null>(null)
 
@@ -18,21 +24,45 @@ export default function Game() {
     ;(flash as any)._t = window.setTimeout(() => setMsg(null), 1500)
   }
 
-  // 1) Initialise longueur (largeur de la grille) + bucket
+  const [showModal, setShowModal] = useState(false)
+
+  useEffect(() => {
+    if (gameOver) setShowModal(true)
+  }, [gameOver])
+  
+
+  // Init longueur + bucket
   useEffect(() => {
     const load = async () => {
       const r = await fetch('/api/daily')
       const d = await r.json()
-      // ⬇️ on ne passe plus attemptLimit (la hauteur est figée à 6 dans le store)
       setTarget('_'.repeat(d.length))
       setBucket(d.bucket ?? null)
+      setShowModal(false) // 👈 cache la modale au nouveau mot
     }
     load()
   }, [setTarget])
 
-  // 2) Soumission commune (clavier physique & bouton ENTER)
+  // Quand on perd, récupérer la solution
+  useEffect(() => {
+    const fetchSolution = async () => {
+      if (outcome === 'lose' && bucket != null) {
+        try {
+          const r = await fetch(`/api/solution?bucket=${bucket}`)
+          const d = await r.json()
+          if (d?.text) setSolution(d.text)
+        } catch {
+          setSolution('???')
+        }
+      }
+    }
+    fetchSolution()
+  }, [outcome, bucket, setSolution])
+
+  // Soumission commune
   const submit = useMemo(() => {
     return async () => {
+      if (gameOver) return // 🔒
       const row = grid[currentRow]
       if (!row || row.some(c => !c.letter)) {
         throw new Error('incomplete')
@@ -40,22 +70,18 @@ export default function Game() {
       if (bucket == null) {
         throw new Error('server_error')
       }
-
       const guess = row.map(c => c.letter).join('')
 
       const resp = await fetch('/api/guess', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guess, bucket }), // on verrouille sur le même bucket
+        body: JSON.stringify({ guess, bucket }),
       })
 
       if (!resp.ok) {
         let code = 'server_error'
-        try {
-          const err = await resp.json()
-          if (err?.error) code = err.error
-        } catch {}
-        throw new Error(code) // 'invalid_word' | 'length_mismatch' | 'server_error'
+        try { const err = await resp.json(); if (err?.error) code = err.error } catch {}
+        throw new Error(code)
       }
 
       const data = await resp.json()
@@ -65,51 +91,43 @@ export default function Game() {
         throw new Error('server_error')
       }
     }
-  }, [grid, currentRow, wordLength, applyServerResult, bucket])
+  }, [grid, currentRow, wordLength, applyServerResult, bucket, gameOver])
 
-  // 3) Clavier physique
+  // Clavier physique (bloqué si gameOver)
   useEffect(() => {
     const handler = async (e: KeyboardEvent) => {
+      if (gameOver) { e.preventDefault(); e.stopPropagation(); return }
       const target = e.target as HTMLElement | null
       if (target && /INPUT|TEXTAREA|SELECT/.test(target.tagName)) return
       if (e.isComposing || e.ctrlKey || e.metaKey || e.altKey) return
 
       if (e.key === 'Enter') {
-        try {
-          await submit()
-        } catch (err: any) {
-          const code = (err?.message ?? 'server_error') as 'incomplete' | 'invalid_word' | 'length_mismatch' | 'server_error'
-          flash(code)
-        }
-        e.preventDefault()
-        e.stopPropagation()
+        try { await submit() }
+        catch (err: any) { const code = (err?.message ?? 'server_error') as any; flash(code) }
+        e.preventDefault(); e.stopPropagation()
         return
       }
-
-      if (e.key === 'Backspace') {
-        onKey('⌫')
-        e.preventDefault()
-        e.stopPropagation()
-        return
-      }
-
+      if (e.key === 'Backspace') { onKey('⌫'); e.preventDefault(); e.stopPropagation(); return }
       const k = e.key.toUpperCase()
-      if (LETTERS.test(k) && k.length === 1) {
-        onKey(k)
-        e.preventDefault()
-        e.stopPropagation()
-      }
+      if (LETTERS.test(k) && k.length === 1) { onKey(k); e.preventDefault(); e.stopPropagation() }
     }
-
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [onKey, submit])
+  }, [onKey, submit, gameOver])
 
   return (
     <div className="flex flex-col items-center gap-4">
       <Board />
       {msg && <div className="text-sm text-red-300">{msg}</div>}
       <Keyboard />
+
+      <ResultModal
+  open={showModal}
+  outcome={outcome}
+  solution={solution}
+  onClose={() => setShowModal(false)} // 👈 maintenant “Fermer” marche
+/>
+
     </div>
   )
 }

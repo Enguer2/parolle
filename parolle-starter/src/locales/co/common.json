@@ -10,6 +10,19 @@
         "6 prove massime. Bona furtuna!"
       ]
     },
+
+      "victory": {
+        "title": "Bravu!",
+        "desc": "Hai trovu a parolla."
+      },
+      "defeat": {
+        "title": "Peccatu!",
+        "solution": "A parolla era"
+      },
+      "common": {
+        "close": "Chjode"
+      },    
+
     "errors": {
   "incomplete": "Compie a linea nanzu à validà.",
   "invalid_word": "Parolla scunnisciuta.",

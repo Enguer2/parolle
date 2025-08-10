@@ -12,6 +12,8 @@ const bump = (prev: KeyState = 'unused', next: KeyState): KeyState =>
 const toBase = (s: string) =>
   s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
 
+type Outcome = 'win' | 'lose' | null
+
 type GameState = {
   word: string
   wordLength: number
@@ -25,6 +27,12 @@ type GameState = {
   /** Applique un pattern "GYBBG" renvoyé par l'API à la ligne courante,
    * met à jour la grille et les couleurs du clavier, puis passe à la ligne suivante. */
   applyServerResult: (pattern: string) => void
+
+  // Fin de partie
+  gameOver: boolean
+  outcome: Outcome
+  solution?: string
+  setSolution: (s?: string) => void
 }
 
 const normalize = (s: string) => s.normalize('NFC').toUpperCase()
@@ -67,13 +75,19 @@ const scoreGuess = (guess: string, target: string): CellState[] => {
 }
 
 export default create<GameState>((set, get) => ({
-  // Valeurs par défaut (tu peux mettre ce que tu veux)
+  // Valeurs par défaut
   word: 'CORSU',
   wordLength: 5,
   attempts: 6,
   grid: makeGrid(6, 5),
   currentRow: 0,
   keyStatesBase: {},
+
+  // État de fin de partie
+  gameOver: false,
+  outcome: null,
+  solution: undefined,
+  setSolution: (s) => set({ solution: s }),
 
   setTarget: (w: string) => {
     const word = normalize(w)
@@ -86,21 +100,29 @@ export default create<GameState>((set, get) => ({
       grid: makeGrid(FIXED_ATTEMPTS, len),
       currentRow: 0,
       keyStatesBase: {},
+      gameOver: false,
+      outcome: null,
+      solution: undefined,
     })
   },
-  
 
   reset: () => {
-    const { attempts, wordLength } = get()
+    const { wordLength } = get()
+    const FIXED_ATTEMPTS = 6
     set({
-      grid: makeGrid(attempts, wordLength),
+      grid: makeGrid(FIXED_ATTEMPTS, wordLength),
       currentRow: 0,
       keyStatesBase: {},
+      gameOver: false,
+      outcome: null,
+      solution: undefined,
     })
   },
 
   onKey: (k: string) => {
     const state = get()
+    if (state.gameOver) return // 🔒 bloque la saisie si partie terminée
+
     const { grid, currentRow, wordLength } = state
     const next = grid.map(r => r.slice())
 
@@ -115,8 +137,7 @@ export default create<GameState>((set, get) => ({
       return set({ grid: next })
     }
 
-    // Enter (LOCAL scoring : garde si tu restes 100% client ;
-    // si tu utilises le scoring serveur, ne déclenche pas ça.
+    // Enter (LOCAL scoring : à garder uniquement si 100% client)
     if (k === 'ENTER') {
       const guess = next[currentRow].map(c => c.letter || ' ').join('')
       if (guess.length < wordLength || next[currentRow].some(c => !c.letter)) return
@@ -135,10 +156,15 @@ export default create<GameState>((set, get) => ({
         base[b] = bump(base[b], st)
       }
 
+      const isWinLocal = next[currentRow].every(c => c.state === 'correct')
+      const isLastRowUsed = currentRow === state.attempts - 1
+
       return set({
         grid: next,
         keyStatesBase: base,
-        currentRow: Math.min(currentRow + 1, state.attempts - 1),
+        currentRow: isWinLocal ? currentRow : Math.min(currentRow + 1, state.attempts - 1),
+        gameOver: isWinLocal || isLastRowUsed,
+        outcome: isWinLocal ? 'win' : (isLastRowUsed ? 'lose' : null),
       })
     }
 
@@ -156,7 +182,7 @@ export default create<GameState>((set, get) => ({
 
   applyServerResult: (pattern: string) => {
     const st = get()
-    const { grid, currentRow, wordLength } = st
+    const { grid, currentRow, wordLength, attempts } = st
     if (!pattern || pattern.length !== wordLength) return
 
     const next = grid.map(r => r.slice())
@@ -177,10 +203,16 @@ export default create<GameState>((set, get) => ({
       base[b] = bump(base[b], ks)
     }
 
+    // 3) Victoire / Défaite
+    const isWin = pattern.split('').every(c => c === 'G')
+    const isLastRowUsed = currentRow === attempts - 1
+
     set({
       grid: next,
       keyStatesBase: base,
-      currentRow: Math.min(currentRow + 1, st.attempts - 1),
+      currentRow: isWin ? currentRow : Math.min(currentRow + 1, attempts - 1),
+      gameOver: isWin || isLastRowUsed,
+      outcome: isWin ? 'win' : (isLastRowUsed ? 'lose' : null),
     })
   },
 }))
