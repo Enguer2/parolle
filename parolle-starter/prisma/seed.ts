@@ -5,61 +5,115 @@ const toBase = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').
 
 async function main() {
   const words = [
-    // Mots mystères (ANSWER)
-    { text: 'MONTE', kind: 'ANSWER' },      // monte / montagne
-    { text: 'CAMPAGNA', kind: 'ANSWER' },   // campagne
-    { text: 'VENTU', kind: 'ANSWER' },      // vent
-    { text: 'ISULA', kind: 'ANSWER' },      // île
-    { text: 'PIANA', kind: 'ANSWER' },      // Piana (village corse)
-    { text: 'FURESTA', kind: 'ANSWER' },    // forêt
-    { text: 'TORRA', kind: 'ANSWER' },      // tour
-    { text: 'PORTU', kind: 'ANSWER' },      // port
-    { text: 'LUMERA', kind: 'ANSWER' },     // lumière
-    { text: 'FURESTER', kind: 'ANSWER' }, // étranger
-    { text: 'PAESELLU', kind: 'ANSWER' }, // petit village
-    { text: 'PAESANNU', kind: 'ANSWER' }, // paysan
-    { text: 'ISULETTI', kind: 'ANSWER' }, // petites îles
-    { text: 'SANGUINE', kind: 'ANSWER' }, // sanguine
-    { text: 'VENTAGLI', kind: 'ANSWER' }, // éventail
-    { text: 'MACCHJIA', kind: 'ANSWER' }, // maquis
-    { text: 'TERRANOVA', kind: 'ANSWER' }, // nouvelle terre (si accepté 9 lettres, on peut enlever une)
+    { text: 'ACQUA', kind: 'ANSWER' }, { text: 'ACQUA', kind: 'GUESS' },
+    { text: 'AGHJA', kind: 'ANSWER' }, { text: 'AGHJA', kind: 'GUESS' },
+    { text: 'AJACCIU', kind: 'ANSWER' }, { text: 'AJACCIU', kind: 'GUESS' },
+    { text: 'ALERIA', kind: 'ANSWER' }, { text: 'ALERIA', kind: 'GUESS' },
+    { text: 'ALIVA', kind: 'ANSWER' }, { text: 'ALIVA', kind: 'GUESS' },
+    { text: 'ALIVETU', kind: 'ANSWER' }, { text: 'ALIVETU', kind: 'GUESS' },
+    { text: 'AEREU', kind: 'ANSWER' }, { text: 'AEREU', kind: 'GUESS' },
+    { text: 'AMICU', kind: 'ANSWER' }, { text: 'AMICU', kind: 'GUESS' },
+    { text: 'APRILE', kind: 'ANSWER' }, { text: 'APRILE', kind: 'GUESS' },
+    { text: 'BALAGNA', kind: 'ANSWER' }, { text: 'BALAGNA', kind: 'GUESS' },
+    { text: 'BALLA', kind: 'ANSWER' }, { text: 'BALLA', kind: 'GUESS' },
+    { text: 'BARCA', kind: 'ANSWER' }, { text: 'BARCA', kind: 'GUESS' },
+    { text: 'BASTIA', kind: 'ANSWER' }, { text: 'BASTIA', kind: 'GUESS' },
+    { text: 'BANDERIA', kind: 'ANSWER' }, { text: 'BANDERIA', kind: 'GUESS' },
+    { text: 'BAVELLA', kind: 'ANSWER' }, { text: 'BAVELLA', kind: 'GUESS' },
+    { text: 'BELLU', kind: 'ANSWER' }, { text: 'BELLU', kind: 'GUESS' },
+    { text: 'BIRRA', kind: 'ANSWER' }, { text: 'BIRRA', kind: 'GUESS' },
+    { text: 'BONIFAZIU', kind: 'ANSWER' }, { text: 'BONIFAZIU', kind: 'GUESS' },
+    { text: 'BROCCIU', kind: 'ANSWER' }, { text: 'BROCCIU', kind: 'GUESS' },
+    { text: 'CALVI', kind: 'ANSWER' }, { text: 'CALVI', kind: 'GUESS' },
+    { text: 'CAMPAGNA', kind: 'ANSWER' }, { text: 'CAMPAGNA', kind: 'GUESS' },
+    { text: 'CANTADOR', kind: 'ANSWER' }, { text: 'CANTADOR', kind: 'GUESS' },
+    { text: 'CANTA', kind: 'ANSWER' }, { text: 'CANTA', kind: 'GUESS' },
+    { text: 'CAPICORSU', kind: 'ANSWER' }, { text: 'CAPICORSU', kind: 'GUESS' },
+    { text: 'CASTAGNA', kind: 'ANSWER' }, { text: 'CASTAGNA', kind: 'GUESS' },
+    { text: 'CASTAGNE', kind: 'ANSWER' }, { text: 'CASTAGNE', kind: 'GUESS' },
+    { text: 'CAFFE', kind: 'ANSWER' }, { text: 'CAFFE', kind: 'GUESS' },
+    { text: 'CAVALLU', kind: 'ANSWER' }, { text: 'CAVALLU', kind: 'GUESS' },
+    { text: 'CIPOLLA', kind: 'ANSWER' }, { text: 'CIPOLLA', kind: 'GUESS' },
+    { text: 'CORTI', kind: 'ANSWER' }, { text: 'CORTI', kind: 'GUESS' },
+    { text: 'CORRE', kind: 'ANSWER' }, { text: 'CORRE', kind: 'GUESS' },
+    { text: 'DICEMBRE', kind: 'ANSWER' }, { text: 'DICEMBRE', kind: 'GUESS' },
+    { text: 'DOLCE', kind: 'ANSWER' }, { text: 'DOLCE', kind: 'GUESS' },
+    { text: 'DUMENICA', kind: 'ANSWER' }, { text: 'DUMENICA', kind: 'GUESS' },
+    { text: 'ESTATE', kind: 'ANSWER' }, { text: 'ESTATE', kind: 'GUESS' },
+    { text: 'FEMINA', kind: 'ANSWER' }, { text: 'FEMINA', kind: 'GUESS' },
+    { text: 'FERRAGHJU', kind: 'ANSWER' }, { text: 'FERRAGHJU', kind: 'GUESS' },
+    { text: 'FESTIGHJ', kind: 'ANSWER' }, { text: 'FESTIGHJ', kind: 'GUESS' },
+    { text: 'FIURE', kind: 'ANSWER' }, { text: 'FIURE', kind: 'GUESS' },
+    { text: 'FIGATELLU', kind: 'ANSWER' }, { text: 'FIGATELLU', kind: 'GUESS' },
+    { text: 'FIERU', kind: 'ANSWER' }, { text: 'FIERU', kind: 'GUESS' },
+    { text: 'FURESTA', kind: 'ANSWER' }, { text: 'FURESTA', kind: 'GUESS' },
+    { text: 'FURESTER', kind: 'ANSWER' }, { text: 'FURESTER', kind: 'GUESS' },
+    { text: 'FRATE', kind: 'ANSWER' }, { text: 'FRATE', kind: 'GUESS' },
+    { text: 'FRATELLI', kind: 'ANSWER' }, { text: 'FRATELLI', kind: 'GUESS' },
+    { text: 'GHJATTU', kind: 'ANSWER' }, { text: 'GHJATTU', kind: 'GUESS' },
+    { text: 'GHJELU', kind: 'ANSWER' }, { text: 'GHJELU', kind: 'GUESS' },
+    { text: 'GHJENTE', kind: 'ANSWER' }, { text: 'GHJENTE', kind: 'GUESS' },
+    { text: 'GHJOCU', kind: 'ANSWER' }, { text: 'GHJOCU', kind: 'GUESS' },
+    { text: 'GHJOVI', kind: 'ANSWER' }, { text: 'GHJOVI', kind: 'GUESS' },
+    { text: 'GHJUGNU', kind: 'ANSWER' }, { text: 'GHJUGNU', kind: 'GUESS' },
+    { text: 'GHJUVENTU', kind: 'ANSWER' }, { text: 'GHJUVENTU', kind: 'GUESS' },
+    { text: 'INVERNU', kind: 'ANSWER' }, { text: 'INVERNU', kind: 'GUESS' },
+    { text: 'ISULA', kind: 'ANSWER' }, { text: 'ISULA', kind: 'GUESS' },
+    { text: 'ISULETTI', kind: 'ANSWER' }, { text: 'ISULETTI', kind: 'GUESS' },
+    { text: 'LEGHJE', kind: 'ANSWER' }, { text: 'LEGHJE', kind: 'GUESS' },
+    { text: 'LETTERA', kind: 'ANSWER' }, { text: 'LETTERA', kind: 'GUESS' },
+    { text: 'LIBRU', kind: 'ANSWER' }, { text: 'LIBRU', kind: 'GUESS' },
+    { text: 'LINGUA', kind: 'ANSWER' }, { text: 'LINGUA', kind: 'GUESS' },
+    { text: 'LUMERA', kind: 'ANSWER' }, { text: 'LUMERA', kind: 'GUESS' },
+    { text: 'MACCHJIA', kind: 'ANSWER' }, { text: 'MACCHJIA', kind: 'GUESS' },
+    { text: 'MAGHJU', kind: 'ANSWER' }, { text: 'MAGHJU', kind: 'GUESS' },
+    { text: 'MAESTRA', kind: 'ANSWER' }, { text: 'MAESTRA', kind: 'GUESS' },
+    { text: 'MANGHJA', kind: 'ANSWER' }, { text: 'MANGHJA', kind: 'GUESS' },
+    { text: 'MANTELLU', kind: 'ANSWER' }, { text: 'MANTELLU', kind: 'GUESS' },
+    { text: 'MARTI', kind: 'ANSWER' }, { text: 'MARTI', kind: 'GUESS' },
+    { text: 'MURTA', kind: 'ANSWER' }, { text: 'MURTA', kind: 'GUESS' },
+    { text: 'MONTE', kind: 'ANSWER' }, { text: 'MONTE', kind: 'GUESS' },
+    { text: 'MUNTAGNA', kind: 'ANSWER' }, { text: 'MUNTAGNA', kind: 'GUESS' },
+    { text: 'MUNTI', kind: 'ANSWER' }, { text: 'MUNTI', kind: 'GUESS' },
+    { text: 'NEBBIU', kind: 'ANSWER' }, { text: 'NEBBIU', kind: 'GUESS' },
+    { text: 'NIOLU', kind: 'ANSWER' }, { text: 'NIOLU', kind: 'GUESS' },
+    { text: 'NIVURA', kind: 'ANSWER' }, { text: 'NIVURA', kind: 'GUESS' },
+    { text: 'NUVEMBRE', kind: 'ANSWER' }, { text: 'NUVEMBRE', kind: 'GUESS' },
+    { text: 'PAESANNU', kind: 'ANSWER' }, { text: 'PAESANNU', kind: 'GUESS' },
+    { text: 'PAESELLU', kind: 'ANSWER' }, { text: 'PAESELLU', kind: 'GUESS' },
+    { text: 'PARLATA', kind: 'ANSWER' }, { text: 'PARLATA', kind: 'GUESS' },
+    { text: 'PASTUREL', kind: 'ANSWER' }, { text: 'PASTUREL', kind: 'GUESS' },
+    { text: 'PIANA', kind: 'ANSWER' }, { text: 'PIANA', kind: 'GUESS' },
+    { text: 'PINETA', kind: 'ANSWER' }, { text: 'PINETA', kind: 'GUESS' },
+    { text: 'PORTELLI', kind: 'ANSWER' }, { text: 'PORTELLI', kind: 'GUESS' },
+    { text: 'PORTU', kind: 'ANSWER' }, { text: 'PORTU', kind: 'GUESS' },
+    { text: 'PRATU', kind: 'ANSWER' }, { text: 'PRATU', kind: 'GUESS' },
+    { text: 'ROSSU', kind: 'ANSWER' }, { text: 'ROSSU', kind: 'GUESS' },
+    { text: 'SABATU', kind: 'ANSWER' }, { text: 'SABATU', kind: 'GUESS' },
+    { text: 'SANGUINE', kind: 'ANSWER' }, { text: 'SANGUINE', kind: 'GUESS' },
+    { text: 'SCARPU', kind: 'ANSWER' }, { text: 'SCARPU', kind: 'GUESS' },
+    { text: 'SCOLA', kind: 'ANSWER' }, { text: 'SCOLA', kind: 'GUESS' },
+    { text: 'SCRIVE', kind: 'ANSWER' }, { text: 'SCRIVE', kind: 'GUESS' },
+    { text: 'SPARTURA', kind: 'ANSWER' }, { text: 'SPARTURA', kind: 'GUESS' },
+    { text: 'SPASSU', kind: 'ANSWER' }, { text: 'SPASSU', kind: 'GUESS' },
+    { text: 'STRADA', kind: 'ANSWER' }, { text: 'STRADA', kind: 'GUESS' },
+    { text: 'STUDIENTE', kind: 'ANSWER' }, { text: 'STUDIENTE', kind: 'GUESS' },
+    { text: 'TEMPU', kind: 'ANSWER' }, { text: 'TEMPU', kind: 'GUESS' },
+    { text: 'TERRANOVA', kind: 'ANSWER' }, { text: 'TERRANOVA', kind: 'GUESS' },
+    { text: 'TORRA', kind: 'ANSWER' }, { text: 'TORRA', kind: 'GUESS' },
+    { text: 'TRADIZIO', kind: 'ANSWER' }, { text: 'TRADIZIO', kind: 'GUESS' },
+    { text: 'TRENU', kind: 'ANSWER' }, { text: 'TRENU', kind: 'GUESS' },
+    { text: 'UTTOBRE', kind: 'ANSWER' }, { text: 'UTTOBRE', kind: 'GUESS' },
+    { text: 'VENACO', kind: 'ANSWER' }, { text: 'VENACO', kind: 'GUESS' },
+    { text: 'VENTAGLI', kind: 'ANSWER' }, { text: 'VENTAGLI', kind: 'GUESS' },
+    { text: 'VENTU', kind: 'ANSWER' }, { text: 'VENTU', kind: 'GUESS' },
+    { text: 'VERDE', kind: 'ANSWER' }, { text: 'VERDE', kind: 'GUESS' },
+    { text: 'VILLAGGI', kind: 'ANSWER' }, { text: 'VILLAGGI', kind: 'GUESS' },
+    { text: 'ZITELLA', kind: 'ANSWER' }, { text: 'ZITELLA', kind: 'GUESS' },
+    { text: 'ZITELLU', kind: 'ANSWER' }, { text: 'ZITELLU', kind: 'GUESS' },
+    { text: 'ZUCCARU', kind: 'ANSWER' }, { text: 'ZUCCARU', kind: 'GUESS' },
+  ];
   
-
-    // Mots utilisables pour deviner (GUESS)
-    { text: 'CAMPAGNA', kind: 'GUESS' },   // campagne
-    { text: 'MUNTI', kind: 'GUESS' },       // monts
-    { text: 'PRATU', kind: 'GUESS' },       // pré
-    { text: 'GHJATTU', kind: 'GUESS' },     // chat
-    { text: 'CAVALLU', kind: 'GUESS' },     // cheval
-    { text: 'ISULETTI', kind: 'GUESS' }, // petites îles
-    { text: 'STRADA', kind: 'GUESS' },      // route
-    { text: 'FIURE', kind: 'GUESS' },       // fleur
-    { text: 'CIPOLLA', kind: 'GUESS' },     // oignon
-    { text: 'FIERU', kind: 'GUESS' },       // fier
-    { text: 'ACQUA', kind: 'GUESS' },       // eau
-    { text: 'PANE', kind: 'GUESS' },        // pain
-    { text: 'VINU', kind: 'GUESS' },        // vin
-    { text: 'CANTA', kind: 'GUESS' },       // chante
-    { text: 'AMICU', kind: 'GUESS' },       // ami
-    { text: 'CASE', kind: 'GUESS' },        // maison
-    { text: 'FRATE', kind: 'GUESS' },       // frère
-    { text: 'MACCHJIA', kind: 'GUESS' }, // maquis
-    { text: 'DOLCE', kind: 'GUESS' },       // doux / dessert
-    { text: 'ROSSU', kind: 'GUESS' },       // rouge
-    { text: 'NIVURA', kind: 'GUESS' },      // noire
-    { text: 'VERDE', kind: 'GUESS' },       // vert
-    { text: 'BELLU', kind: 'GUESS' },        // beau
-    { text: 'BANDERIA', kind: 'GUESS' }, // bannière
-    { text: 'PORTELLI', kind: 'GUESS' }, // petites portes
-    { text: 'FESTIGHJ', kind: 'GUESS' }, // fête (festin)
-    { text: 'TRADIZIO', kind: 'GUESS' }, // tradition
-    { text: 'VILLAGGI', kind: 'GUESS' }, // villages
-    { text: 'CANTADOR', kind: 'GUESS' }, // chanteur
-    { text: 'PASTUREL', kind: 'GUESS' }, // berger
-    { text: 'CASTAGNE', kind: 'GUESS' }, // châtaignes
-    { text: 'SPARTURA', kind: 'GUESS' }, // séparation
-    { text: 'FRATELLI', kind: 'GUESS' }, // frères
-  ]
 
   for (const w of words) {
     await prisma.word.upsert({
