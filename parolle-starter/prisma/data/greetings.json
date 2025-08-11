@@ -1,0 +1,21 @@
+{
+    "fr": {
+      "default": "Bonjour, nous sommes le {DATE}",
+      "12-25": "Joyeux Noël ! Nous sommes le {DATE}",
+      "01-01": "Bonne année ! Nous sommes le {DATE}",
+      "easter": "Joyeuses Pâques ! Nous sommes le {DATE}"
+    },
+    "co": {
+      "default": "Bonghjornu, oghje hè u {DATE}",
+      "12-25": "Bon Natale ! Oghje hè u {DATE}",
+      "01-01": "Bon’annu ! Oghje hè u {DATE}",
+      "easter": "Buona Pasqua ! Oghje hè u {DATE}"
+    },
+    "en": {
+      "default": "Hello, today is {DATE}",
+      "12-25": "Merry Christmas! Today is {DATE}",
+      "01-01": "Happy New Year! Today is {DATE}",
+      "easter": "Happy Easter! Today is {DATE}"
+    }
+  }
+  

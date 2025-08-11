@@ -1,3 +1,5 @@
+import fs from 'fs'
+import path from 'path'
 import express from 'express'
 import cors from 'cors'
 import { PrismaClient, WordKind } from '@prisma/client'
@@ -121,7 +123,7 @@ app.post('/api/guess', async (req, res) => {
   }
 })
 
-// ------- Faits historiques -------
+// ------- Date & Faits historiques -------
 
 const pickLang = (v?: string | string[]) => {
   const raw = Array.isArray(v) ? v[0] : (v || '')
@@ -147,6 +149,55 @@ function parisISODate(base?: Date) {
   return { iso: `${yyyy}-${mm}-${dd}`, y: Number(yyyy), m: Number(mm), d: Number(dd) }
 }
 
+// ======== Messages de bienvenue (overridable via JSON) ========
+type GreetingsMap = Record<string, Record<string, string>>
+
+let GREETINGS: GreetingsMap = {
+  fr: { default: 'Bonjour, nous sommes le {DATE}' },
+  co: { default: 'Bonghjornu, oghje hè u {DATE}' },
+  en: { default: 'Hello, today is {DATE}' },
+}
+
+try {
+  const p = path.join(process.cwd(), 'prisma', 'data', 'greetings.json')
+  if (fs.existsSync(p)) {
+    const loaded = JSON.parse(fs.readFileSync(p, 'utf8')) as GreetingsMap
+    GREETINGS = { ...GREETINGS, ...loaded }
+  }
+} catch { /* ignore */ }
+
+// Pâques (Meeus/Jones/Butcher)
+function easterDate(year: number) {
+  const a = year % 19
+  const b = Math.floor(year / 100)
+  const c = year % 100
+  const d = Math.floor(b / 4)
+  const e = b % 4
+  const f = Math.floor((b + 8) / 25)
+  const g = Math.floor((b - f + 1) / 3)
+  const h = (19 * a + b - d - g + 15) % 30
+  const i = Math.floor(c / 4)
+  const k = c % 4
+  const l = (32 + 2 * e + 2 * i - h - k) % 7
+  const m = Math.floor((a + 11 * h + 22 * l) / 451)
+  const month = Math.floor((h + l - 7 * m + 114) / 31)
+  const day = ((h + l - 7 * m + 114) % 31) + 1
+  return { month, day }
+}
+
+function greetingTemplateFor(lang: 'fr'|'co'|'en', y: number, m: number, d: number) {
+  const map = GREETINGS[lang] ?? GREETINGS.fr
+  const key = String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0')
+
+  const e = easterDate(y)
+  const easterKey = String(e.month).padStart(2,'0') + '-' + String(e.day).padStart(2,'0')
+  const isEaster = key === easterKey
+
+  if (isEaster && map['easter']) return map['easter']
+  if (map[key]) return map[key]
+  return map['default'] ?? GREETINGS.fr.default
+}
+
 app.get('/api/fact', async (req, res) => {
   try {
     const lang = pickLang((req.query.lang as string) || req.headers['accept-language'])
@@ -166,34 +217,37 @@ app.get('/api/fact', async (req, res) => {
     }
 
     const [fact] = await prisma.$queryRaw<
-    Array<{ fact_fr: string|null; fact_en: string|null; fact_co: string|null }>
-  >`
-    SELECT "fact_fr","fact_en","fact_co"
-    FROM public."HistoricalFact"
-    WHERE EXTRACT(MONTH FROM "date") = ${m}
-      AND EXTRACT(DAY   FROM "date") = ${d}
-    ORDER BY "date" ASC
-    LIMIT 1
-  `
+      Array<{ fact_fr: string|null; fact_en: string|null; fact_co: string|null }>
+    >`
+      SELECT "fact_fr","fact_en","fact_co"
+      FROM public."HistoricalFact"
+      WHERE EXTRACT(MONTH FROM "date") = ${m}
+        AND EXTRACT(DAY   FROM "date") = ${d}
+      ORDER BY "date" ASC
+      LIMIT 1
+    `
 
-  const [month] = await prisma.$queryRaw<Array<{ afterDay: string }>>`
-  SELECT "afterDay"
-  FROM public."MonthName"
-  WHERE "locale" = ${lang} AND "month" = ${m}
-  LIMIT 1
-`
+    const [month] = await prisma.$queryRaw<Array<{ afterDay: string }>>`
+      SELECT "afterDay"
+      FROM public."MonthName"
+      WHERE "locale" = ${lang} AND "month" = ${m}
+      LIMIT 1
+    `
 
+    const dateText = month
+      ? `${d} ${month.afterDay} ${y}`
+      : `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`
 
-const dateText = month
-  ? `${d} ${month.afterDay} ${y}`
-  : `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
+    // message d’en-tête sur la même ligne que la date
+    const tpl = greetingTemplateFor(lang as 'fr'|'co'|'en', y, m, d)
+    const headerText = tpl.replace('{DATE}', dateText)
 
-const factText =
-  (lang === 'co' && fact?.fact_co) ||
-  (lang === 'en' && fact?.fact_en) ||
-  fact?.fact_fr || null
+    const factText =
+      (lang === 'co' && fact?.fact_co) ||
+      (lang === 'en' && fact?.fact_en) ||
+      fact?.fact_fr || null
 
-    res.json({ date: iso, dateText, fact: factText })
+    res.json({ date: iso, dateText, headerText, fact: factText })
   } catch (e) {
     console.error('GET /api/fact error:', e)
     res.status(500).json({ error: 'server_error' })
