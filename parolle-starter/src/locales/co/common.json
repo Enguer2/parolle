@@ -11,7 +11,11 @@
       ]
     },
     "banner": {
-      "today_sentence": "Oghje hè {{date}}"
+      "today_sentence": "Oghje hè {{date}}",
+      "loading": "Caricamentu…",
+      "more": "Ne sapè di più",
+      "less": "Chjode",
+      "noFact": "Nisunu fattu storicu oghje."
     },
       "victory": {
         "title": "Bravu!",

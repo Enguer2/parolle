@@ -8,6 +8,8 @@ import HistoricalBanner from '@/components/HistoricalBanner'
 
 const LETTERS = /[A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜÒÌ]/i
 
+
+
 export default function Game() {
   const { t } = useTranslation()
   const {

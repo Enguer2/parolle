@@ -20,7 +20,11 @@
 },
 
 "banner": {
-  "today_sentence": "Today is {{date}}"
+  "today_sentence": "Today is {{date}}",
+  "loading": "Loading…",
+  "more": "Learn more",
+  "less": "Close",
+  "noFact": "No historical fact for today."
 },
 
   "victory": {

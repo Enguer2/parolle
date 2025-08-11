@@ -32,7 +32,11 @@
     },
 
       "banner": {
-        "today_sentence": "Nous sommes le {{date}}"
+        "today_sentence": "Nous sommes le {{date}}",
+        "loading": "Chargement…",
+        "more": "En savoir plus",
+        "less": "Fermer",
+        "noFact": "Aucun fait historique pour aujourd’hui."
       },    
 
   "howto": {
