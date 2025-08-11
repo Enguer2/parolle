@@ -17,14 +17,9 @@
       "less": "Chjode",
       "noFact": "Nisunu fattu storicu oghje."
     },
-      "victory": {
-        "title": "Bravu!",
-        "desc": "Hai trovu a parolla."
-      },
-      "defeat": {
-        "title": "Peccatu!",
-        "solution": "A parolla era"
-      },
+  "labels": { "solution": "A parolla era" },
+  "victory": { "title": "Bravu !", "desc": "Hai trovu a parolla." },
+  "defeat": { "title": "Sbagliu !", "desc": "A prossima volta." },
       "common": {
         "close": "Chjode"
       },

@@ -27,14 +27,9 @@
   "noFact": "No historical fact for today."
 },
 
-  "victory": {
-    "title": "Well done!",
-    "desc": "You found the word."
-  },
-  "defeat": {
-    "title": "Too bad!",
-    "solution": "The word was: {{word}}"
-  },
+"labels": { "solution": "The word was" },
+"victory": { "title": "Nice!", "desc": "You found the word." },
+"defeat": { "title": "Missed!", "desc": "Better luck next time." },
   "common": {
     "close": "Close"
   },

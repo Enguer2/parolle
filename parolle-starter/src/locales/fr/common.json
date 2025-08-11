@@ -19,14 +19,12 @@
   "server_error": "Erreur serveur, réessaie."
   },
 
-    "victory": {
-      "title": "Bravo !",
-      "desc": "Tu as trouvé le mot."
-    },
-    "defeat": {
-      "title": "Raté !",
-      "solution": "Le mot était"
-    },
+  
+    "labels": { "solution": "Le mot était" },
+    "victory": { "title": "Bravo !", "desc": "Tu as trouvé le mot." },
+    "defeat": { "title": "Raté !", "desc": "Ce sera pour la prochaine fois." },
+  
+  
     "common": {
       "close": "Fermer"
     },

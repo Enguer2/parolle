@@ -61,16 +61,21 @@ async function getAnswerForBucket(bucket: number) {
 
 app.get('/api/solution', async (req, res) => {
   try {
-    const bucket = Number(req.query.bucket)
-    if (!Number.isFinite(bucket)) return res.status(400).json({ error: 'bad_request' })
+    const q = req.query.bucket
+    const bucket = Number.isFinite(Number(q)) ? Number(q) : Math.floor(Date.now() / BUCKET_MS)
+
     const word = await getAnswerForBucket(bucket)
-    if (!word) return res.status(404).json({ error: 'no_answer' })
-    res.json({ text: word.text })
+    console.log('[API /solution]', { bucket, text: word?.text })
+
+    if (!word?.text) return res.status(404).json({ error: 'no_answer' })
+    res.json({ text: String(word.text) })
   } catch (e) {
     console.error('GET /api/solution error:', e)
     res.status(500).json({ error: 'server_error' })
   }
 })
+
+
 
 app.get('/api/daily', async (_req, res) => {
   try {

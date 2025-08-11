@@ -8,65 +8,65 @@ import HistoricalBanner from '@/components/HistoricalBanner'
 
 const LETTERS = /[A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜÒÌ]/i
 
-
-
 export default function Game() {
   const { t } = useTranslation()
   const {
     setTarget, onKey, applyServerResult,
     grid, currentRow, wordLength,
-    gameOver, outcome, solution, setSolution
+    gameOver, outcome, solution, setSolution,
   } = useGame()
 
   const [msg, setMsg] = useState<string | null>(null)
   const [bucket, setBucket] = useState<number | null>(null)
+  const [showModal, setShowModal] = useState(false)
 
   const flash = (key: 'incomplete' | 'invalid_word' | 'length_mismatch' | 'server_error') => {
     setMsg(t(`errors.${key}`))
     window.clearTimeout((flash as any)._t)
     ;(flash as any)._t = window.setTimeout(() => setMsg(null), 1500)
   }
-  
 
-  const [showModal, setShowModal] = useState(false)
-
-  useEffect(() => {
-    if (gameOver) setShowModal(true)
-  }, [gameOver])
-  
-
-  // Init longueur + bucket
+  // Init longueur + bucket (reset aussi la solution/modale)
   useEffect(() => {
     const load = async () => {
       const r = await fetch('/api/daily')
       const d = await r.json()
       setTarget('_'.repeat(d.length))
       setBucket(d.bucket ?? null)
-      setShowModal(false) // 👈 cache la modale au nouveau mot
+      setShowModal(false)
+      setSolution(undefined) // reset solution quand le daily change
     }
     load()
-  }, [setTarget])
+  }, [setTarget, setSolution])
 
-  // Quand on perd, récupérer la solution
+  // Ouvre/ferme la modale en suivant l'état du jeu
   useEffect(() => {
-    const fetchSolution = async () => {
-      if (outcome === 'lose' && bucket != null) {
-        try {
-          const r = await fetch(`/api/solution?bucket=${bucket}`)
-          const d = await r.json()
-          if (d?.text) setSolution(d.text)
-        } catch {
-          setSolution('???')
-        }
+    setShowModal(gameOver)
+  }, [gameOver])
+
+  // ⚠️ Récupérer la solution une fois la partie finie (win ou lose)
+  useEffect(() => {
+    if (!gameOver) return
+    if (bucket == null) return
+    if (solution) return // déjà récupérée
+
+    ;(async () => {
+      try {
+        const r = await fetch(`/api/solution?bucket=${bucket}`)
+        if (!r.ok) throw new Error('server_error')
+        const d = await r.json()
+        if (d?.text) setSolution(d.text)
+        else setSolution('???')
+      } catch {
+        setSolution('???')
       }
-    }
-    fetchSolution()
-  }, [outcome, bucket, setSolution])
+    })()
+  }, [gameOver, bucket, solution, setSolution])
 
   // Soumission commune
   const submit = useMemo(() => {
     return async () => {
-      if (gameOver) return // 🔒
+      if (gameOver) return
       const row = grid[currentRow]
       if (!row || row.some(c => !c.letter)) {
         throw new Error('incomplete')
@@ -97,7 +97,7 @@ export default function Game() {
     }
   }, [grid, currentRow, wordLength, applyServerResult, bucket, gameOver])
 
-  // Clavier physique (bloqué si gameOver)
+  // Clavier physique
   useEffect(() => {
     const handler = async (e: KeyboardEvent) => {
       if (gameOver) { e.preventDefault(); e.stopPropagation(); return }
@@ -121,20 +121,17 @@ export default function Game() {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <HistoricalBanner /> {/* 👈 ajouté ici */}
+      <HistoricalBanner />
       <Board />
-      
       {msg && <div className="text-sm text-red-300">{msg}</div>}
       <Keyboard />
 
       <ResultModal
-  open={showModal}
-  outcome={outcome}
-  solution={solution}
-  onClose={() => setShowModal(false)} // 👈 maintenant “Fermer” marche
-/>
-
+        open={showModal}
+        outcome={outcome}
+        solution={solution}
+        onClose={() => setShowModal(false)}
+      />
     </div>
-    
   )
 }

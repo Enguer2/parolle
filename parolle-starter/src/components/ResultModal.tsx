@@ -8,8 +8,8 @@ type Props = {
   onClose: () => void
 }
 
+// ...
 export default function ResultModal({ open, outcome, solution, onClose }: Props) {
-  // 👇 précise le namespace "common"
   const { t } = useTranslation('common')
   if (!open || !outcome) return null
 
@@ -21,7 +21,7 @@ export default function ResultModal({ open, outcome, solution, onClose }: Props)
             <h2 className="text-2xl font-bold text-green-400 mb-2">
               {t('victory.title', { defaultValue: 'Bravo !' })}
             </h2>
-            <p className="text-slate-300 mb-4">
+            <p className="text-slate-300 mb-2">
               {t('victory.desc', { defaultValue: 'Tu as trouvé le mot.' })}
             </p>
           </>
@@ -30,11 +30,21 @@ export default function ResultModal({ open, outcome, solution, onClose }: Props)
             <h2 className="text-2xl font-bold text-red-400 mb-2">
               {t('defeat.title', { defaultValue: 'Raté !' })}
             </h2>
-            <p className="text-slate-300 mb-4">
-              {t('defeat.solution', { word: solution ?? '—', defaultValue: 'Le mot était : {{word}}' })}
+            <p className="text-slate-300 mb-2">
+              {t('defeat.desc', { defaultValue: 'Ce sera pour la prochaine fois.' })}
             </p>
           </>
         )}
+
+        {/* Afficher la solution si dispo */}
+{/* Afficher la solution si dispo */}
+{(solution ?? '').trim() !== '' && (
+  <p className="text-slate-200 mb-4">
+    {t('labels.solution', { defaultValue: 'Le mot était' })}{' '}
+    <span className="font-semibold tracking-wide">{solution}</span>
+  </p>
+)}
+
 
         <button
           type="button"
