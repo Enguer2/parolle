@@ -165,28 +165,33 @@ app.get('/api/fact', async (req, res) => {
       iso = parts.iso; y = parts.y; m = parts.m; d = parts.d
     }
 
-    const [fact] = await prisma.$queryRaw<Array<{ fact_fr: string|null, fact_en: string|null, fact_co: string|null }>>`
-      SELECT "fact_fr","fact_en","fact_co"
-      FROM public."HistoricalFact"
-      WHERE "date" = to_date(${iso}, 'YYYY-MM-DD')
-      LIMIT 1
-    `
+    const [fact] = await prisma.$queryRaw<
+    Array<{ fact_fr: string|null; fact_en: string|null; fact_co: string|null }>
+  >`
+    SELECT "fact_fr","fact_en","fact_co"
+    FROM public."HistoricalFact"
+    WHERE EXTRACT(MONTH FROM "date") = ${m}
+      AND EXTRACT(DAY   FROM "date") = ${d}
+    ORDER BY "date" ASC
+    LIMIT 1
+  `
 
-    const [month] = await prisma.$queryRaw<Array<{ afterDay: string }>>`
-      SELECT "afterDay"
-      FROM public."MonthName"
-      WHERE "locale" = ${lang} AND "month" = ${m}
-      LIMIT 1
-    `
+  const [month] = await prisma.$queryRaw<Array<{ afterDay: string }>>`
+  SELECT "afterDay"
+  FROM public."MonthName"
+  WHERE "locale" = ${lang} AND "month" = ${m}
+  LIMIT 1
+`
 
-    const dateText = month
-      ? `${d} ${month.afterDay} ${y}`
-      : `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`
 
-    const factText =
-      (lang === 'co' && fact?.fact_co) ||
-      (lang === 'en' && fact?.fact_en) ||
-      fact?.fact_fr || null
+const dateText = month
+  ? `${d} ${month.afterDay} ${y}`
+  : `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
+
+const factText =
+  (lang === 'co' && fact?.fact_co) ||
+  (lang === 'en' && fact?.fact_en) ||
+  fact?.fact_fr || null
 
     res.json({ date: iso, dateText, fact: factText })
   } catch (e) {

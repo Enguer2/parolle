@@ -1,0 +1,23 @@
+[
+    {
+      "_comment": "FORMAT : YEAR/MONTH/DAY",
+      "date": "1900-12-03",
+      "fr": "12 mars 1736 : Théodore de Neuhoff…",
+      "en": "March 12, 1736: Theodor von Neuhoff…",
+      "co": "12 di marzu 1736: Teodoru di Neuhoff…"
+    },
+    {
+      "date": "1900-08-05",
+      "fr": "8 mai 1769 : bataille de Ponte Novu…",
+      "en": "May 8, 1769: Battle of Ponte Novu…",
+      "co": "8 di maghju 1769: a battaglia di Ponte Novu…"
+    },
+    {
+        "date": "1900-08-11",
+        "fr": "11 août : … (fait historique en français)",
+        "en": "August 11: … (historical fact in English)",
+        "co": "11 d'aostu : … (fattu storicu in corsu)"
+      }
+      
+  ]
+  

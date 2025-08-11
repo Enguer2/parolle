@@ -1,10 +1,14 @@
--- Create HistoricalFact if missing
-create table if not exists public."HistoricalFact" (
-  id       serial primary key,
-  "date"   date not null,
-  fact_fr  text,
-  fact_en  text,
-  fact_co  text,
-  "wordId" integer references public."Word"(id) on delete set null on update cascade,
-  constraint "HistoricalFact_date_key" unique ("date")
-);
+model HistoricalFact {
+  id       Int      @id @default(autoincrement())
+  date     DateTime @db.Date
+  month    Int
+  day      Int
+  fact_fr  String?
+  fact_en  String?
+  fact_co  String?
+  wordId   Int?
+  word     Word?    @relation(fields: [wordId], references: [id])
+
+  @@unique([date])
+  @@index([month, day])
+}
