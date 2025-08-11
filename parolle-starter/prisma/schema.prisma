@@ -15,19 +15,19 @@ enum WordKind {
 }
 
 model Word {
-  id         Int      @id @default(autoincrement())
-  text       String   @db.VarChar(32)
-  text_base  String   @db.VarChar(32)
-  length     Int
-  kind       WordKind
-  difficulty Int      @default(1)
-  def_fr     String?
-  ex_co      String?
-  dialect    String?
-  is_active  Boolean  @default(true)
+  id           Int           @id @default(autoincrement())
+  text         String        @db.VarChar(32)
+  text_base    String        @db.VarChar(32)
+  length       Int
+  kind         WordKind
+  difficulty   Int           @default(1)
+  def_fr       String?
+  ex_co        String?
+  dialect      String?
+  is_active    Boolean       @default(true)
 
-  // relation inverse
   dailyAnswers DailyAnswer[]
+  historicalFacts HistoricalFact[]
 
   @@unique([text, kind], map: "text_kind")
   @@index([length])
@@ -39,4 +39,25 @@ model DailyAnswer {
   word   Word     @relation(fields: [wordId], references: [id])
 
   @@index([wordId])
+}
+
+model HistoricalFact {
+  id      Int      @id @default(autoincrement())
+  date    DateTime @db.Date
+  fact_fr String?
+  fact_en String?
+  fact_co String?
+  wordId  Int?
+  word    Word?    @relation(fields: [wordId], references: [id])
+
+  @@unique([date])
+}
+
+model MonthName {
+  id       Int    @id @default(autoincrement())
+  locale   String
+  month    Int
+  afterDay String
+
+  @@unique([locale, month], name: "locale_month")
 }

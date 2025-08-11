@@ -12,6 +12,29 @@
     "playGuest": "Jouer sans connexion",
     "login": "Connexion"
   },
+  "errors": {
+  "incomplete": "Complète la ligne avant de valider.",
+  "invalid_word": "Mot inconnu.",
+  "length_mismatch": "Longueur incorrecte pour ce mot.",
+  "server_error": "Erreur serveur, réessaie."
+  },
+
+    "victory": {
+      "title": "Bravo !",
+      "desc": "Tu as trouvé le mot."
+    },
+    "defeat": {
+      "title": "Raté !",
+      "solution": "Le mot était"
+    },
+    "common": {
+      "close": "Fermer"
+    },
+
+      "banner": {
+        "today_sentence": "Nous sommes le {{date}}"
+      },    
+
   "howto": {
     "title": "Comment jouer",
     "steps": [

@@ -10,7 +10,9 @@
         "6 prove massime. Bona furtuna!"
       ]
     },
-
+    "banner": {
+      "today_sentence": "Oghje hè {{date}}"
+    },
       "victory": {
         "title": "Bravu!",
         "desc": "Hai trovu a parolla."
@@ -21,7 +23,7 @@
       },
       "common": {
         "close": "Chjode"
-      },    
+      },
 
     "errors": {
   "incomplete": "Compie a linea nanzu à validà.",

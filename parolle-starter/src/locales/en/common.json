@@ -9,12 +9,18 @@
         "Each attempt colors letters: green (correct spot), yellow (present), gray (absent).",
         "6 attempts max. Bona furtuna!"
       ]
+
+      
     },
     "errors": {
   "incomplete": "Finish the row before submitting.",
   "invalid_word": "Unknown word.",
   "length_mismatch": "Wrong length for this word.",
   "server_error": "Server error, try again."
+},
+
+"banner": {
+  "today_sentence": "Today is {{date}}"
 },
 
   "victory": {

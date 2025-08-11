@@ -4,6 +4,7 @@ import Board from '@/components/Board'
 import Keyboard from '@/components/Keyboard'
 import ResultModal from '@/components/ResultModal'
 import useGame from '@/store/useGame'
+import HistoricalBanner from '@/components/HistoricalBanner'
 
 const LETTERS = /[A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜÒÌ]/i
 
@@ -23,6 +24,7 @@ export default function Game() {
     window.clearTimeout((flash as any)._t)
     ;(flash as any)._t = window.setTimeout(() => setMsg(null), 1500)
   }
+  
 
   const [showModal, setShowModal] = useState(false)
 
@@ -117,7 +119,9 @@ export default function Game() {
 
   return (
     <div className="flex flex-col items-center gap-4">
+      <HistoricalBanner /> {/* 👈 ajouté ici */}
       <Board />
+      
       {msg && <div className="text-sm text-red-300">{msg}</div>}
       <Keyboard />
 
@@ -129,5 +133,6 @@ export default function Game() {
 />
 
     </div>
+    
   )
 }
