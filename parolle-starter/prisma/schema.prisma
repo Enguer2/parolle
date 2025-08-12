@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,24 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum WordKind {
-  ANSWER
-  GUESS
-}
-
 model Word {
-  id           Int           @id @default(autoincrement())
-  text         String        @db.VarChar(32)
-  text_base    String        @db.VarChar(32)
-  length       Int
-  kind         WordKind
-  difficulty   Int           @default(1)
-  def_fr       String?
-  ex_co        String?
-  dialect      String?
-  is_active    Boolean       @default(true)
-
-  dailyAnswers DailyAnswer[]
+  id              Int              @id @default(autoincrement())
+  text            String           @db.VarChar(32)
+  text_base       String           @db.VarChar(32)
+  length          Int
+  kind            WordKind
+  difficulty      Int              @default(1)
+  def_fr          String?
+  ex_co           String?
+  dialect         String?
+  is_active       Boolean          @default(true)
+  dailyAnswers    DailyAnswer[]
   historicalFacts HistoricalFact[]
 
   @@unique([text, kind], map: "text_kind")
@@ -43,14 +35,17 @@ model DailyAnswer {
 
 model HistoricalFact {
   id      Int      @id @default(autoincrement())
-  date    DateTime @db.Date
+  date    DateTime @unique @db.Date
   fact_fr String?
   fact_en String?
   fact_co String?
   wordId  Int?
   word    Word?    @relation(fields: [wordId], references: [id])
+}
 
-  @@unique([date])
+enum WordKind {
+  ANSWER
+  GUESS
 }
 
 model MonthName {
