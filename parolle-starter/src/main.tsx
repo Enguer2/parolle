@@ -1,3 +1,4 @@
+// src/main.tsx
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
@@ -9,19 +10,24 @@ import Stats from '@/pages/Stats'
 import HowToPlay from '@/pages/HowToPlay'
 import Settings from '@/pages/Settings'
 import Login from '@/pages/Login'
+import AuthCallback from '@/pages/AuthCallback'
+import AuthDebug from '@/pages/AuthDebug'
+
 import './i18n'
 
 const router = createBrowserRouter([
-  { path: '/', element: <Home /> },
   {
     path: '/',
     element: <App />,
     children: [
+      { index: true, element: <Home /> },
       { path: 'game', element: <Game /> },
       { path: 'stats', element: <Stats /> },
       { path: 'how-to-play', element: <HowToPlay /> },
       { path: 'settings', element: <Settings /> },
       { path: 'login', element: <Login /> },
+      { path: 'auth/callback', element: <AuthCallback /> },
+      { path: 'auth/debug', element: <AuthDebug /> },
     ],
   },
 ])

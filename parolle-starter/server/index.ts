@@ -2,19 +2,24 @@ import fs from 'fs'
 import path from 'path'
 import express from 'express'
 import cors from 'cors'
+import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
 import { PrismaClient, WordKind } from '@prisma/client'
 
 const prisma = new PrismaClient()
 const app = express()
 
-const toBase = (s: string) =>
-  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
-
-app.use(cors())
-app.use(express.json())
+// ---------- CONFIG ----------
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret'
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
 
 // 5 minutes pour tests ; 24h en prod
 const BUCKET_MS = 5 * 60 * 1000
+
+// ---------- UTILS ----------
+const toBase = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+
 const normalize = (s: string) => s.normalize('NFC').toUpperCase()
 
 function scoreGuess(guess: string, target: string) {
@@ -34,6 +39,30 @@ function scoreGuess(guess: string, target: string) {
   return res
 }
 
+type JWTPayload = { uid: number }
+
+function signToken(uid: number) {
+  return jwt.sign({ uid } as JWTPayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN })
+}
+
+function auth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const h = req.headers.authorization || ''
+  const token = h.startsWith('Bearer ') ? h.slice(7) : null
+  if (!token) return res.status(401).json({ error: 'unauthorized' })
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as JWTPayload
+    ;(req as any).uid = payload.uid
+    return next()
+  } catch {
+    return res.status(401).json({ error: 'unauthorized' })
+  }
+}
+
+// ---------- MIDDLEWARES ----------
+app.use(cors())
+app.use(express.json())
+
+// ---------- GAME HELPERS ----------
 async function getAnswerForNow() {
   const total = await prisma.word.count({ where: { kind: WordKind.ANSWER, is_active: true } })
   if (total === 0) return null
@@ -59,6 +88,88 @@ async function getAnswerForBucket(bucket: number) {
   })
 }
 
+// ---------- AUTH ----------
+app.post('/api/register', async (req, res) => {
+  try {
+    const { email, username, password } = req.body as { email?: string; username?: string; password?: string }
+    if (!email || !username || !password) return res.status(400).json({ error: 'bad_input' })
+
+    const exists = await prisma.user.findFirst({ where: { OR: [{ email }, { username }] }, select: { id: true } })
+    if (exists) return res.status(400).json({ error: 'already_exists' })
+
+    const hash = await bcrypt.hash(password, 10)
+    const user = await prisma.user.create({ data: { email, username, password: hash } })
+
+    const token = signToken(user.id)
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username, score: user.score } })
+  } catch (e) {
+    console.error('POST /api/register error:', e)
+    res.status(500).json({ error: 'server_error' })
+  }
+})
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body as { email?: string; password?: string }
+    if (!email || !password) return res.status(400).json({ error: 'bad_input' })
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    if (!user) return res.status(401).json({ error: 'invalid_credentials' })
+
+    const ok = await bcrypt.compare(password, user.password)
+    if (!ok) return res.status(401).json({ error: 'invalid_credentials' })
+
+    const token = signToken(user.id)
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username, score: user.score } })
+  } catch (e) {
+    console.error('POST /api/login error:', e)
+    res.status(500).json({ error: 'server_error' })
+  }
+})
+
+app.get('/api/me', auth, async (req, res) => {
+  const uid = (req as any).uid as number
+  const user = await prisma.user.findUnique({ where: { id: uid }, select: { id: true, email: true, username: true, score: true } })
+  if (!user) return res.status(404).json({ error: 'not_found' })
+  res.json({ user })
+})
+
+// Score + Leaderboard
+app.post('/api/score', auth, async (req, res) => {
+  try {
+    const uid = (req as any).uid as number
+    const { delta, set } = req.body as { delta?: number; set?: number }
+
+    let data: { score?: number } = {}
+    if (typeof set === 'number') {
+      data.score = Math.max(0, Math.floor(set))
+    } else if (typeof delta === 'number') {
+      const u = await prisma.user.findUnique({ where: { id: uid }, select: { score: true } })
+      const next = Math.max(0, (u?.score ?? 0) + Math.floor(delta))
+      data.score = next
+    } else {
+      return res.status(400).json({ error: 'bad_input' })
+    }
+
+    const updated = await prisma.user.update({ where: { id: uid }, data, select: { score: true } })
+    res.json({ score: updated.score })
+  } catch (e) {
+    console.error('POST /api/score error:', e)
+    res.status(500).json({ error: 'server_error' })
+  }
+})
+
+app.get('/api/leaderboard', async (req, res) => {
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10))
+  const rows = await prisma.user.findMany({
+    orderBy: [{ score: 'desc' }, { id: 'asc' }],
+    take: limit,
+    select: { id: true, username: true, score: true }
+  })
+  res.json({ top: rows })
+})
+
+// ---------- GAME ROUTES ----------
 app.get('/api/solution', async (req, res) => {
   try {
     const q = req.query.bucket
@@ -74,8 +185,6 @@ app.get('/api/solution', async (req, res) => {
     res.status(500).json({ error: 'server_error' })
   }
 })
-
-
 
 app.get('/api/daily', async (_req, res) => {
   try {
@@ -128,8 +237,7 @@ app.post('/api/guess', async (req, res) => {
   }
 })
 
-// ------- Date & Faits historiques -------
-
+// ---------- HISTORICAL FACTS ----------
 const pickLang = (v?: string | string[]) => {
   const raw = Array.isArray(v) ? v[0] : (v || '')
   const x = raw.toLowerCase()
@@ -154,7 +262,6 @@ function parisISODate(base?: Date) {
   return { iso: `${yyyy}-${mm}-${dd}`, y: Number(yyyy), m: Number(mm), d: Number(dd) }
 }
 
-// ======== Messages de bienvenue (overridable via JSON) ========
 type GreetingsMap = Record<string, Record<string, string>>
 
 let GREETINGS: GreetingsMap = {
@@ -243,7 +350,6 @@ app.get('/api/fact', async (req, res) => {
       ? `${d} ${month.afterDay} ${y}`
       : `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`
 
-    // message d’en-tête sur la même ligne que la date
     const tpl = greetingTemplateFor(lang as 'fr'|'co'|'en', y, m, d)
     const headerText = tpl.replace('{DATE}', dateText)
 
@@ -259,5 +365,6 @@ app.get('/api/fact', async (req, res) => {
   }
 })
 
+// ---------- BOOT ----------
 const PORT = 8787
 app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`))
