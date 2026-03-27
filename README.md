@@ -7,27 +7,35 @@
 
 🌍 **Live Demo:** [parolle-corsica.vercel.app](https://parolle-corsica.vercel.app)
 
-*(Scroll down for the English version 🇬🇧)*
 ---
 
 ### 📸 Aperçu / Preview
 
 <p align="center">
-  <img src="./screenshots/home.png" width="400" alt="Accueil" style="margin: 10px;" />
-  <img src="./screenshots/play.png" width="400" alt="Interface de jeu" style="margin: 10px;" />
+  <kbd>
+    <img src="./screenshots/home.png" width="600" alt="Accueil Parolle" />
+  </kbd>
+  <br>
+  <em>L'interface d'accueil épurée et moderne.</em>
 </p>
 
 <p align="center">
-  <img src="./screenshots/howtoplay.png" width="260" alt="Aide" style="margin: 10px;" />
-  <img src="./screenshots/result.png" width="260" alt="Résultat" style="margin: 10px;" />
-  <img src="./screenshots/statics.png" width="260" alt="Statistiques" style="margin: 10px;" />
+  <img src="./screenshots/game.png" width="380" alt="Interface de jeu" style="border-radius: 10px; margin: 5px;" />
+  <img src="./screenshots/howtoplay.png" width="380" alt="Aide" style="border-radius: 10px; margin: 5px;" />
 </p>
 
 <p align="center">
-  <img src="./screenshots/win2.png" width="400" alt="Victoire" style="margin: 10px;" />
+  <img src="./screenshots/result.png" width="250" alt="Résultat" style="border-radius: 8px; margin: 5px;" />
+  <img src="./screenshots/statics.png" width="250" alt="Statistiques" style="border-radius: 8px; margin: 5px;" />
+  <img src="./screenshots/win2.png" width="250" alt="Victoire" style="border-radius: 8px; margin: 5px;" />
+</p>
+
+<p align="center">
+  <sub>L'interface utilise un design <strong>Glassmorphism</strong> sombre, optimisé pour une expérience mobile et desktop fluide.</sub>
 </p>
 
 ---
+*(Scroll down for the English version 🇬🇧)*
 
 ## 🇫🇷 Français
 
