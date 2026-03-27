@@ -16,6 +16,7 @@ export default function PlayGame() {
   const [loading, setLoading] = useState(true)
 
   const [user, setUser] = useState<any>(null)
+  const [userStats, setUserStats] = useState<any>(null) 
   const [showUserMenu, setShowUserMenu] = useState(false)
   
   const [language, setLanguage] = useState<Language>('fr')
@@ -39,17 +40,31 @@ export default function PlayGame() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
 
+      if (user) {
+        const { data: stats } = await supabase.from('user_stats').select('*').single()
+        if (stats) setUserStats(stats)
+      }
+
       const { data, error } = await supabase.rpc('get_word_of_the_day')
       const dailyWord = error ? "CASA" : data.toUpperCase()
       setSolution(dailyWord)
 
       const saved = getFromLocal()
+      
+      // 1. Si on a une sauvegarde pour le mot du jour
       if (saved?.gameState?.solution === dailyWord) {
         setGuesses(saved.gameState.guesses)
         setCurrentGuessIndex(saved.gameState.currentGuessIndex)
         setIsGameOver(saved.gameState.isGameOver)
-        if (saved.gameState.isGameOver) setShowModal(true)
-      } else {
+        
+        // Si la partie est finie, on montre les résultats, SURTOUT PAS l'aide
+        if (saved.gameState.isGameOver) {
+          setShowModal(true)
+          setShowHelpModal(false)
+        }
+      } 
+      // 2. Si c'est une toute nouvelle partie (pas de sauvegarde)
+      else {
         const newStart = {
           ...defaultSettings,
           gameState: {
@@ -64,12 +79,15 @@ export default function PlayGame() {
         setIsGameOver(false)
         setShowModal(false)
         saveToLocal(newStart)
+        
+        // On affiche l'aide UNIQUEMENT ici
         setShowHelpModal(true)
       }
       setLoading(false)
     }
     initGame()
   }, [])
+  
 
   useEffect(() => {
     if (!loading && solution) {
@@ -91,6 +109,7 @@ export default function PlayGame() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    setUserStats(null) 
     setShowUserMenu(false)
   }
 
@@ -99,6 +118,54 @@ export default function PlayGame() {
     setShowLangMenu(false)
     localStorage.setItem('parolle_lang', lang) 
   }
+
+  const updateStatsInDB = async (won: boolean, tries: number) => {
+    if (!user) return; 
+
+    let currentStats = userStats;
+    
+    if (!currentStats) {
+      const { data } = await supabase.from('user_stats').select('*').single();
+      currentStats = data;
+    }
+
+    if (!currentStats) {
+      const initialStats = {
+        user_id: user.id,
+        games_played: 1,
+        games_won: won ? 1 : 0,
+        current_streak: won ? 1 : 0,
+        max_streak: won ? 1 : 0,
+        guess_distribution: won ? [tries === 1 ? 1 : 0, tries === 2 ? 1 : 0, tries === 3 ? 1 : 0, tries === 4 ? 1 : 0, tries === 5 ? 1 : 0, tries === 6 ? 1 : 0] : [0,0,0,0,0,0]
+      };
+      await supabase.from('user_stats').insert(initialStats);
+      setUserStats(initialStats);
+      return;
+    }
+
+    const newPlayed = currentStats.games_played + 1;
+    const newWon = won ? currentStats.games_won + 1 : currentStats.games_won;
+    const newStreak = won ? currentStats.current_streak + 1 : 0;
+    const newMaxStreak = Math.max(currentStats.max_streak, newStreak);
+    
+    let newDistribution = [...currentStats.guess_distribution];
+    if (won && tries >= 1 && tries <= 6) {
+      newDistribution[tries - 1] += 1;
+    }
+
+    const updatedStats = {
+      games_played: newPlayed,
+      games_won: newWon,
+      current_streak: newStreak,
+      max_streak: newMaxStreak,
+      guess_distribution: newDistribution,
+      last_won_at: won ? new Date().toISOString() : currentStats.last_won_at,
+      updated_at: new Date().toISOString()
+    };
+
+    await supabase.from('user_stats').update(updatedStats).eq('user_id', user.id);
+    setUserStats({ ...currentStats, ...updatedStats }); 
+  };
 
   const keyStatuses = useMemo(() => {
     const statuses: Record<string, string> = {}
@@ -113,17 +180,22 @@ export default function PlayGame() {
     return statuses
   }, [guesses, currentGuessIndex, solution])
 
+  // --- CORRECTION DU CLAVIER (Clic fantôme) ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isGameOver || showModal || showHelpModal) return 
+      if (isGameOver || showModal || showHelpModal || showStatsModal) return 
       const key = e.key.toUpperCase()
-      if (key === 'ENTER') onKeyPress('ENTER')
+      
+      if (key === 'ENTER') {
+        e.preventDefault() // <-- Empêche l'activation d'un bouton qui aurait le focus (comme "Règles")
+        onKeyPress('ENTER')
+      }
       else if (key === 'BACKSPACE') onKeyPress('BACKSPACE')
       else if (/^[A-Z]$/.test(key)) onKeyPress(key)
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [guesses, currentGuessIndex, solution, isGameOver, showModal, showHelpModal])
+  }, [guesses, currentGuessIndex, solution, isGameOver, showModal, showHelpModal, showStatsModal])
 
   const onKeyPress = (key: string) => {
     if (currentGuessIndex >= 6 || loading || isGameOver) return
@@ -139,13 +211,23 @@ export default function PlayGame() {
     setGuesses(newGuesses)
   }
 
+  // --- CORRECTION DE LA VALIDATION ---
   const submitGuess = () => {
     const currentGuess = guesses[currentGuessIndex]
     const nextIndex = currentGuessIndex + 1
     setCurrentGuessIndex(nextIndex)
 
-    if (currentGuess === solution || nextIndex === 6) {
+    if (currentGuess === solution) {
       setIsGameOver(true)
+      setShowHelpModal(false) // <-- SÉCURITÉ : Forcer la fermeture des règles
+      setShowStatsModal(false) // <-- SÉCURITÉ : Forcer la fermeture des stats
+      updateStatsInDB(true, nextIndex) 
+      setTimeout(() => setShowModal(true), 800) 
+    } else if (nextIndex === 6) {
+      setIsGameOver(true)
+      setShowHelpModal(false) // <-- SÉCURITÉ
+      setShowStatsModal(false) // <-- SÉCURITÉ
+      updateStatsInDB(false, 6) 
       setTimeout(() => setShowModal(true), 800) 
     }
   }
@@ -181,7 +263,6 @@ export default function PlayGame() {
             <button onClick={() => setShowStatsModal(true)} className="hover:text-white transition">{t.stats}</button>
             <button className="hover:text-white transition">{t.settings}</button>
             
-
             <div className="relative">
               <button onClick={() => setShowLangMenu(!showLangMenu)} className="hover:text-white transition flex items-center space-x-1">
                 <span className="material-icons text-[18px]">language</span>
@@ -209,7 +290,6 @@ export default function PlayGame() {
             {user ? (
               <div className="relative">
                 <button onClick={() => setShowUserMenu(!showUserMenu)} className="bg-[#2d3748] border border-[#4a5568] text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-[#4a5568] transition flex items-center gap-2">
-                  <img src={user.user_metadata?.avatar_url || "https://www.gravatar.com/avatar/?d=mp"} alt="Avatar" className="w-5 h-5 rounded-full" />
                   {user.user_metadata?.full_name?.split(' ')[0] || t.player} 
                   <span className="material-icons text-[18px]">arrow_drop_down</span>
                 </button>
@@ -274,7 +354,6 @@ export default function PlayGame() {
         </div>
       </main>
 
-      {/* --- APPEL DES MODALES EXTERNALISÉES --- */}
       {showHelpModal && (
         <HelpModal 
           t={t} 
@@ -295,6 +374,9 @@ export default function PlayGame() {
       {showStatsModal && (
         <StatsModal 
           t={t} 
+          stats={userStats} 
+          user={user} 
+          onLogin={handleLogin}
           onClose={() => setShowStatsModal(false)} 
         />
       )}
