@@ -11,8 +11,6 @@
 
 ### 📸 Aperçu / Preview
 
-### 📸 Aperçu / Preview
-
 <p align="center">
   <kbd>
     <img src="./screenshots/home.png" width="600" alt="Accueil Parolle" />
@@ -21,7 +19,7 @@
 </p>
 
 <p align="center">
-  <img src="./screenshots/play.png" width="450"  style="border-radius: 12px; border: 1px solid #48484930;" />
+  <img src="./screenshots/play.png" width="450" alt="" style="border-radius: 12px; border: 1px solid #48484930;" />
 </p>
 
 <p align="center">
