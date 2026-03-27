@@ -60,7 +60,27 @@ export const translations = {
     botAnalysisTitle: "Parolle Bot donne une analyse de vos essais.",
     botAnalysisLink: "Avez-vous battu le bot ?",
     distributionTitle: "DISTRIBUTION DES ESSAIS",
-    helpCenterLink: "Vous avez des questions sur les stats ou les badges ? Visitez notre centre d'aide"
+    helpCenterLink: "Vous avez des questions sur les stats ou les badges ? Visitez notre centre d'aide",
+    // --- Navigation ---
+    theGame: "Le Jeu",
+    howToPlayNav: "Comment Jouer",
+    // --- Hero Section ---
+    welcome: "Bienvenue",
+    dailyChallenge: "LE DÉFI QUOTIDIEN",
+    dailyChallengeTitle: "LE DÉFI DE",
+    dailyChallengeSubtitle: "CHAQUE JOUR.",
+    heroDescription: "Découvrez le mot mystère du jour. Un voyage linguistique à travers la langue corse, pour le plaisir de l'esprit.",
+    newRecord: "NOUVEAU RECORD",
+    // --- Stats Bento ---
+    activePlayers: "Joueurs au Total",
+    language: "LANGUE",
+    preserveFuture: "Préserver notre avenir",
+    wordsDiscovered: "Mots Découverts",
+    // --- Footer ---
+    privacy: "Confidentialité",
+    terms: "Conditions",
+    contact: "Contact",
+    streak: "Série"
   },
   co: {
     loading: "Caricamentu...",
@@ -111,7 +131,27 @@ export const translations = {
     botAnalysisTitle: "Parolle Bot face un'analisi di e vostre prove.",
     botAnalysisLink: "Avete vintu contru à u bot ?",
     distributionTitle: "SPARTIZIONE DI E PROVE",
-    helpCenterLink: "Avete dumande nantu à e statistiche ? Visitate u nostru centru d'aiutu"
+    helpCenterLink: "Avete dumande nantu à e statistiche ? Visitate u nostru centru d'aiutu",
+    // --- Navigation ---
+    theGame: "U Ghjocu",
+    howToPlayNav: "Cumu Ghjucà",
+    // --- Hero Section ---
+    welcome: "Benvenutu",
+    dailyChallenge: "A SFIDA DI OGNI GHJORNU",
+    dailyChallengeTitle: "A SFIDA DI",
+    dailyChallengeSubtitle: "OGNI GHJORNU.",
+    heroDescription: "Scuprite a parolla mista di u ghjornu. Un viaghju linguisticu attraversu a lingua corsa, pè u piacè di u spiritu.",
+    newRecord: "NOVU RECORDU",
+    // --- Stats Bento ---
+    activePlayers: "Ghjucadori Totali",
+    language: "LENGUA",
+    preserveFuture: "Priservà u nostru avvene",
+    wordsDiscovered: "Parolle Scuperte",
+    // --- Footer ---
+    privacy: "Cunfidenzialità",
+    terms: "Cundizione",
+    contact: "Cuntattu",
+    streak: "Séria"
   },
   en: {
     loading: "Loading...",
@@ -162,6 +202,26 @@ export const translations = {
     botAnalysisTitle: "Parolle Bot gives an analysis of your guesses.",
     botAnalysisLink: "Did you beat the bot?",
     distributionTitle: "GUESS DISTRIBUTION",
-    helpCenterLink: "Have questions about stats or badges? Visit our help center"
+    helpCenterLink: "Have questions about stats or badges? Visit our help center",
+    // --- Navigation ---
+    theGame: "The Game",
+    howToPlayNav: "How to Play",
+    // --- Hero Section ---
+    welcome: "Welcome",
+    dailyChallenge: "THE DAILY CHALLENGE",
+    dailyChallengeTitle: "THE CHALLENGE OF",
+    dailyChallengeSubtitle: "EVERY DAY.",
+    heroDescription: "Discover the mystery word of the day. A linguistic journey through the Corsican language, for the pleasure of the mind.",
+    newRecord: "NEW RECORD",
+    // --- Stats Bento ---
+    activePlayers: "Total Players",
+    language: "LANGUAGE",
+    preserveFuture: "Preserve our future",
+    wordsDiscovered: "Words Discovered",
+    // --- Footer ---
+    privacy: "Privacy",
+    terms: "Terms",
+    contact: "Contact",
+    streak: "Streak"
   }
 };

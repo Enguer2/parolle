@@ -7,135 +7,224 @@ interface StatsModalProps {
 }
 
 export default function StatsModal({ t, stats, user, onLogin, onClose }: StatsModalProps) {
-  
-  // --- ÉCRAN SI NON CONNECTÉ ---
+
+  // ── Non connecté ─────────────────────────────────────────────────────────────
   if (!user) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm transition-opacity">
-        <div className="bg-[#1a2332] w-full max-w-[400px] rounded-xl text-white relative shadow-2xl p-8 text-center border border-gray-700">
-          <button onClick={onClose} className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors">
-            <span className="material-icons text-[28px]">close</span>
-          </button>
-          
-          <div className="w-16 h-16 bg-[#2d3748] rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="material-icons text-3xl text-[#8e98a8]">leaderboard</span>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+        <div
+          className="bg-[#131314] w-full max-w-[400px] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.7)] relative border border-[#484849]/30 overflow-hidden"
+          style={{ fontFamily: 'Inter, sans-serif' }}
+        >
+          <div className="h-px bg-gradient-to-r from-transparent via-[#aff4a6]/40 to-transparent" />
+
+          <div className="p-8 text-center">
+            <button
+              onClick={onClose}
+              className="absolute top-5 right-5 text-white/30 hover:text-white transition-colors"
+            >
+              <span className="material-icons text-[22px]">close</span>
+            </button>
+
+            {/* Icon */}
+            <div className="w-16 h-16 bg-[#1f1f21] border border-[#484849]/30 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <span className="material-icons text-3xl text-[#aff4a6]/60">leaderboard</span>
+            </div>
+
+            <h2
+              className="text-2xl font-black uppercase tracking-tighter mb-3 text-white"
+              style={{ fontFamily: 'Manrope, sans-serif' }}
+            >
+              {t.statsTitle}
+            </h2>
+            <p className="text-white/40 text-sm leading-relaxed mb-8">{t.loginForStats}</p>
+
+            <button
+              onClick={onLogin}
+              className="w-full py-4 bg-[#aff4a6] text-[#002a04] font-black rounded-xl hover:bg-[#a2e599] active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest shadow-[0_4px_24px_rgba(175,244,166,0.2)]"
+              style={{ fontFamily: 'Manrope, sans-serif' }}
+            >
+              <img
+                src="https://www.google.com/favicon.ico"
+                alt="Google"
+                className="w-4 h-4 bg-white rounded-full p-0.5"
+              />
+              {t.login}
+            </button>
           </div>
-          <h2 className="text-2xl font-medium mb-3">{t.statsTitle}</h2>
-          <p className="text-[#8e98a8] text-sm mb-8 leading-relaxed">
-            {t.loginForStats}
-          </p>
-          
-          <button 
-            onClick={onLogin} 
-            className="w-full py-4 bg-[#6b5cd6] text-white font-bold rounded-xl hover:bg-[#5849bc] transition-all flex items-center justify-center gap-3 shadow-lg"
-          >
-            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5 bg-white rounded-full p-0.5" />
-            {t.login}
-          </button>
+
+          <div className="h-px bg-gradient-to-r from-transparent via-[#484849]/20 to-transparent" />
         </div>
       </div>
     );
   }
 
-  // --- CALCUL DES STATISTIQUES (SI CONNECTÉ) ---
+  // ── Statistiques ──────────────────────────────────────────────────────────────
   const played = stats?.games_played || 0;
   const won = stats?.games_won || 0;
-  // Calcul du % : (victoires / joués) * 100
-  const winPct = played > 0 ? Math.round((won / played) * 100) : 0; 
+  const winPct = played > 0 ? Math.round((won / played) * 100) : 0;
   const currentStreak = stats?.current_streak || 0;
   const maxStreak = stats?.max_streak || 0;
-  const distribution = stats?.guess_distribution || [0, 0, 0, 0, 0, 0];
+  const distribution: number[] = stats?.guess_distribution || [0, 0, 0, 0, 0, 0];
+  const totalWins = distribution.reduce((a, b) => a + b, 0);
+  const maxInDistribution = Math.max(...distribution, 1);
 
-  const totalWins = distribution.reduce((a: number, b: number) => a + b, 0);
+  const statItems = [
+    { value: played,        label: t.statsPlayed },
+    { value: `${winPct}%`, label: t.statsWinPct },
+    { value: currentStreak, label: t.statsCurrentStreak },
+    { value: maxStreak,     label: t.statsMaxStreak },
+  ];
+
+  const badges = [
+    {
+      key: 'parolle2',
+      unlocked: distribution[1] > 0,
+      value: '2',
+      label: t.badgeParolleIn2,
+      color: '#ebd474',
+      glow: 'rgba(235,212,116,0.25)',
+      gradient: 'from-[#ebd474] to-[#c9a000]',
+    },
+    {
+      key: 'streak7',
+      unlocked: maxStreak >= 7,
+      value: '7',
+      label: t.badgeStreak7,
+      sub: `${Math.min(currentStreak, 7)}/7`,
+      color: '#aff4a6',
+      glow: 'rgba(175,244,166,0.2)',
+      gradient: 'from-[#aff4a6] to-[#6fb069]',
+    },
+    {
+      key: 'parolle1',
+      unlocked: distribution[0] > 0,
+      value: '1',
+      label: t.badgeParolleIn1,
+      color: '#f9e281',
+      glow: 'rgba(249,226,129,0.2)',
+      gradient: 'from-[#f9e281] to-[#6e5e03]',
+    },
+  ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm transition-opacity">
-      <div className="bg-[#1a2332] w-full max-w-[500px] rounded-xl text-white relative shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
-        
-        <button onClick={onClose} className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors">
-          <span className="material-icons text-[28px]">close</span>
-        </button>
-        
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+      <div
+        className="bg-[#131314] w-full max-w-[500px] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.7)] relative border border-[#484849]/30 overflow-hidden max-h-[90vh] overflow-y-auto"
+        style={{ fontFamily: 'Inter, sans-serif' }}
+      >
+        <div className="h-px bg-gradient-to-r from-transparent via-[#aff4a6]/40 to-transparent" />
+
         <div className="p-8">
-          <h2 className="text-2xl font-medium mb-6">{t.statsTitle}</h2>
-          
-          {/* --- Chiffres Clés --- */}
+          {/* Close */}
+          <button
+            onClick={onClose}
+            className="absolute top-5 right-5 text-white/30 hover:text-white transition-colors"
+          >
+            <span className="material-icons text-[22px]">close</span>
+          </button>
+
+          {/* Title */}
+          <h2
+            className="text-2xl font-black uppercase tracking-tighter mb-1 text-white"
+            style={{ fontFamily: 'Manrope, sans-serif' }}
+          >
+            {t.statsTitle}
+          </h2>
+          <div className="h-px bg-gradient-to-r from-[#aff4a6]/20 to-transparent mb-7" />
+
+          {/* ── Key stats ── */}
           <div className="grid grid-cols-4 gap-3 mb-8">
-            <div className="text-center">
-              <div className="text-3xl font-medium mb-1">{played}</div>
-              <div className="text-[13px] text-[#8e98a8] leading-tight">{t.statsPlayed}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-medium mb-1">{winPct}</div>
-              <div className="text-[13px] text-[#8e98a8] leading-tight">{t.statsWinPct}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-medium mb-1">{currentStreak}</div>
-              <div className="text-[13px] text-[#8e98a8] leading-tight">{t.statsCurrentStreak}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-medium mb-1">{maxStreak}</div>
-              <div className="text-[13px] text-[#8e98a8] leading-tight">{t.statsMaxStreak}</div>
-            </div>
+            {statItems.map(({ value, label }, i) => (
+              <div key={i} className="text-center bg-[#1f1f21] rounded-xl py-4 px-2 border border-[#484849]/20">
+                <div
+                  className="text-3xl font-black text-white mb-1 tracking-tighter"
+                  style={{ fontFamily: 'Manrope, sans-serif' }}
+                >
+                  {value}
+                </div>
+                <div className="text-[11px] text-white/40 leading-tight uppercase tracking-wider">{label}</div>
+              </div>
+            ))}
           </div>
 
-          {/* --- Badges --- */}
-          <div className="border-t border-white/10 pt-6 mb-6">
-            <h3 className="text-base font-medium mb-2">{t.badgesTitle}</h3>
-            <p className="text-[13px] text-[#8e98a8] mb-4">{t.badgesSubtitle}</p>
-            
-            <div className="flex gap-4 justify-center mb-4">
-              {/* Badge Or */}
-              <div className={`text-center w-24 transition-transform ${distribution[1] > 0 ? 'cursor-pointer hover:scale-105' : 'opacity-40'}`}>
-                <div className={`w-[72px] h-[72px] mx-auto mb-2 rounded-full flex items-center justify-center p-1 ${distribution[1] > 0 ? 'bg-gradient-to-br from-[#e6b800] to-[#c9a000] shadow-[0_2px_8px_rgba(230,184,0,0.3)]' : 'bg-[#3d4654]'}`}>
-                  <div className={`w-full h-full rounded-full bg-[#1a2332] border-2 flex items-center justify-center ${distribution[1] > 0 ? 'border-[#e6b800]' : 'border-[#5a6576]'}`}>
-                    <span className={`text-[28px] font-medium ${distribution[1] > 0 ? 'text-[#e6b800]' : 'text-[#5a6576]'}`}>2</span>
-                  </div>
-                </div>
-                <div className="text-xs text-white leading-tight">{t.badgeParolleIn2}</div>
-              </div>
-              
-              {/* Badge Argent */}
-              <div className={`text-center w-24 transition-transform ${maxStreak >= 7 ? 'cursor-pointer hover:scale-105' : 'opacity-40'}`}>
-                <div className="w-[72px] h-[72px] mx-auto mb-2 rounded-full flex items-center justify-center bg-[#3d4654] p-1">
-                  <div className="w-full h-full rounded-full bg-[#1a2332] border-2 border-[#5a6576] flex items-center justify-center">
-                    <span className="text-[28px] font-medium text-[#5a6576]">7</span>
-                  </div>
-                </div>
-                <div className="text-xs text-white leading-tight mb-1">{t.badgeStreak7}</div>
-                <div className="text-[11px] text-[#8e98a8]">{Math.min(currentStreak, 7)}/7</div>
-              </div>
-              
-              {/* Badge Parolle en 1 */}
-              <div className={`text-center w-24 transition-transform ${distribution[0] > 0 ? 'cursor-pointer hover:scale-105' : 'opacity-40'}`}>
-                <div className={`w-[72px] h-[72px] mx-auto mb-2 rounded-full flex items-center justify-center p-1 ${distribution[0] > 0 ? 'bg-gradient-to-br from-[#4a9eff] to-[#357abd] shadow-[0_2px_8px_rgba(74,158,255,0.3)]' : 'bg-[#3d4654]'}`}>
-                  <div className={`w-full h-full rounded-full bg-[#1a2332] border-2 flex items-center justify-center ${distribution[0] > 0 ? 'border-[#4a9eff]' : 'border-[#5a6576]'}`}>
-                    <span className={`text-[28px] font-medium ${distribution[0] > 0 ? 'text-[#4a9eff]' : 'text-[#5a6576]'}`}>1</span>
-                  </div>
-                </div>
-                <div className="text-xs text-white leading-tight">{t.badgeParolleIn1}</div>
-              </div>
-            </div>
-          </div>
+          {/* ── Badges ── */}
+          <div className="border-t border-[#484849]/20 pt-6 mb-6">
+            <h3
+              className="text-sm font-black uppercase tracking-widest text-white/60 mb-1"
+              style={{ fontFamily: 'Manrope, sans-serif' }}
+            >
+              {t.badgesTitle}
+            </h3>
+            <p className="text-[12px] text-white/30 mb-5">{t.badgesSubtitle}</p>
 
-          {/* --- Distribution --- */}
-          <div className="border-t border-white/10 pt-6">
-            <h3 className="text-[14px] font-medium mb-3 text-white">{t.distributionTitle}</h3>
-            
-            <div className="flex flex-col gap-1.5">
-              {distribution.map((value: number, index: number) => {
-                const percentage = totalWins > 0 ? Math.max(7, Math.round((value / totalWins) * 100)) : 7;
-                const isActive = value > 0 && value === Math.max(...distribution);
-                
-                return (
-                  <div key={index} className="flex items-center gap-2">
-                    <span className="text-[13px] text-[#8e98a8] w-3">{index + 1}</span>
-                    <div className="flex-1 flex">
-                      <div 
-                        className={`h-6 rounded-sm flex items-center px-2 min-w-[32px] ${isActive ? 'bg-[#4caf50]' : 'bg-[#3d4654]'}`}
-                        style={{ width: value > 0 ? `${percentage}%` : 'auto' }}
+            <div className="flex gap-4 justify-center">
+              {badges.map(({ key, unlocked, value, label, sub, color, glow, gradient }) => (
+                <div
+                  key={key}
+                  className={`text-center w-24 transition-transform ${unlocked ? 'hover:scale-105 cursor-default' : 'opacity-30'}`}
+                >
+                  {/* Badge ring */}
+                  <div
+                    className={`w-[68px] h-[68px] mx-auto mb-2.5 rounded-full flex items-center justify-center p-1 ${unlocked ? `bg-gradient-to-br ${gradient}` : 'bg-[#1f1f21]'}`}
+                    style={unlocked ? { boxShadow: `0 4px 16px ${glow}` } : {}}
+                  >
+                    <div
+                      className="w-full h-full rounded-full bg-[#131314] border-2 flex items-center justify-center"
+                      style={{ borderColor: unlocked ? color : '#484849' }}
+                    >
+                      <span
+                        className="text-[26px] font-black"
+                        style={{ fontFamily: 'Manrope, sans-serif', color: unlocked ? color : '#484849' }}
                       >
-                        <span className={`text-[13px] text-white ${isActive ? 'font-medium' : ''}`}>{value}</span>
+                        {value}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-white/60 leading-tight mb-1">{label}</div>
+                  {sub && <div className="text-[11px] text-white/30">{sub}</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Distribution ── */}
+          <div className="border-t border-[#484849]/20 pt-6">
+            <h3
+              className="text-sm font-black uppercase tracking-widest text-white/60 mb-4"
+              style={{ fontFamily: 'Manrope, sans-serif' }}
+            >
+              {t.distributionTitle}
+            </h3>
+
+            <div className="flex flex-col gap-2">
+              {distribution.map((value: number, index: number) => {
+                const pct = Math.max(6, Math.round((value / maxInDistribution) * 100));
+                const isMax = value > 0 && value === maxInDistribution;
+
+                return (
+                  <div key={index} className="flex items-center gap-3">
+                    <span
+                      className="text-[13px] text-white/40 w-3 text-right flex-shrink-0"
+                      style={{ fontFamily: 'Manrope, sans-serif' }}
+                    >
+                      {index + 1}
+                    </span>
+                    <div className="flex-1 flex">
+                      <div
+                        className={`h-7 rounded-lg flex items-center px-3 min-w-[28px] transition-all ${
+                          isMax
+                            ? 'bg-[#6fb069] shadow-[0_0_12px_rgba(111,176,105,0.25)]'
+                            : 'bg-[#1f1f21] border border-[#484849]/20'
+                        }`}
+                        style={{ width: `${pct}%` }}
+                      >
+                        <span
+                          className={`text-[13px] font-black ${isMax ? 'text-[#002a04]' : 'text-white/50'}`}
+                          style={{ fontFamily: 'Manrope, sans-serif' }}
+                        >
+                          {value}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -143,15 +232,20 @@ export default function StatsModal({ t, stats, user, onLogin, onClose }: StatsMo
               })}
             </div>
 
-            <div className="mt-6 text-center">
-              <a href="#" className="text-[13px] text-[#8e98a8] hover:text-white transition-colors underline-offset-2 hover:underline">
+            {/* Footer link */}
+            <div className="mt-7 text-center">
+              <a
+                href="#"
+                className="text-[12px] uppercase tracking-widest text-white/20 hover:text-white/50 transition-colors"
+              >
                 {t.helpCenterLink}
               </a>
             </div>
           </div>
-
         </div>
+
+        <div className="h-px bg-gradient-to-r from-transparent via-[#484849]/20 to-transparent" />
       </div>
     </div>
-  )
+  );
 }
