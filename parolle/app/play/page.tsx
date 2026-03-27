@@ -297,9 +297,12 @@ export default function PlayGame() {
 
           <div className="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-300">
             {/*<button className="hover:text-white transition">{t.play}</button>*/}
-            <button onClick={() => setShowHelpModal(true)} className="hover:text-white transition">{t.rules}</button>
-            <button onClick={() => setShowStatsModal(true)} className="hover:text-white transition">{t.stats}</button>
-            {/*<button className="hover:text-white transition">{t.settings}</button>*/}
+            <button onClick={() => setShowHelpModal(true)} className="hover:text-white transition flex items-center justify-center p-1" title={t.rules}>
+            <span className="material-icons text-[22px]">help_outline</span>
+            </button>
+            <button onClick={() => setShowStatsModal(true)} className="hover:text-white transition flex items-center justify-center p-1"title={t.stats}>
+            <span className="material-icons text-[22px]">leaderboard</span>
+            </button>
             
             <div className="relative">
               <button onClick={() => setShowLangMenu(!showLangMenu)} className="hover:text-white transition flex items-center space-x-1">
