@@ -54,7 +54,7 @@
 
 ### 💻 Stack Technique
 * **Frontend :** Next.js (App Router), React, TypeScript.
-* **Styling :** Tailwind CSS, Polices personnalisées (Manrope, Inter).
+* **Styling :** Tailwind CSS.
 * **Backend & BDD :** Supabase (PostgreSQL, Authentication OAuth).
 * **Déploiement :** Vercel.
 
@@ -73,7 +73,7 @@
 
 ### 💻 Tech Stack
 * **Frontend:** Next.js (App Router), React, TypeScript.
-* **Styling:** Tailwind CSS, Custom Fonts (Manrope, Inter).
+* **Styling:** Tailwind CSS.
 * **Backend & DB:** Supabase (PostgreSQL, OAuth Authentication).
 * **Deployment:** Vercel.
 
@@ -95,7 +95,6 @@ Si vous souhaitez faire tourner le projet en local / *If you want to run the pro
     ```
 3.   **Set up environment variables:**
     Create a .env.local file in the root directory and add your Supabase credentials:
-
     ```bash
     NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
     NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
