@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <img src="./screenshots/play.png" width="450" alt="Interface de jeu" style="border-radius: 12px; border: 1px solid #48484930;" />
+  <img src="./screenshots/play.png" width="450"  style="border-radius: 12px; border: 1px solid #48484930;" />
 </p>
 
 <p align="center">
@@ -38,10 +38,6 @@
 
 <p align="center">
   <img src="./screenshots/win2.png" width="450" alt="Victoire" style="border-radius: 12px; border: 1px solid #48484930;" />
-</p>
-
-<p align="center">
-  <sub>L'interface utilise un design <strong>Glassmorphism</strong> sombre, optimisé pour une expérience mobile et desktop fluide.</sub>
 </p>
 
 ---
