@@ -5,9 +5,9 @@ interface ResultModalProps {
   isWon: boolean;
   nbTries: number;
   solution: string;
-  stats?: any; 
-  user?: any;           // <-- NOUVEAU : Pour vérifier s'il est connecté
-  onLogin?: () => void; // <-- NOUVEAU : Fonction pour lancer Google OAuth
+  stats?: any;
+  user?: any;
+  onLogin?: () => void;
   onClose: () => void;
 }
 
@@ -18,7 +18,7 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
   const winPct = played > 0 ? Math.round((won / played) * 100) : 0;
   const currentStreak = stats?.current_streak || (isWon ? 1 : 0);
   const maxStreak = stats?.max_streak || (isWon ? 1 : 0);
-  
+
   // --- Compte à rebours dynamique (Cycle de 10 min) ---
   const [timeLeft, setTimeLeft] = useState<string>("00:00:00");
 
@@ -26,7 +26,7 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
     const updateTimer = () => {
       const now = new Date();
       const nextInterval = new Date(now);
-      
+
       const currentMinutes = now.getMinutes();
       const next10 = Math.ceil((currentMinutes + 1) / 10) * 10;
       nextInterval.setMinutes(next10, 0, 0);
@@ -41,75 +41,109 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
       setTimeLeft(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
     };
 
-    updateTimer(); 
-    const timerId = setInterval(updateTimer, 1000); 
-    return () => clearInterval(timerId); 
+    updateTimer();
+    const timerId = setInterval(updateTimer, 1000);
+    return () => clearInterval(timerId);
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm transition-opacity">
-      <div className="bg-[#2c2c2d]/90 backdrop-blur-md w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl relative border border-[#484849]">
-        
-        <div className="absolute top-4 right-4">
-          <button onClick={onClose} className="p-2 text-[#adaaab] hover:text-white transition-colors">
-            <span className="material-icons">close</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+      <div
+        className="bg-[#131314] w-full max-w-[450px] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.7)] relative border border-[#484849]/30 overflow-hidden"
+        style={{ fontFamily: 'Inter, sans-serif' }}
+      >
+        {/* Ligne d'accentuation haute (Verte si gagné, Rouge sombre si perdu) */}
+        <div className={`h-px bg-gradient-to-r from-transparent ${isWon ? 'via-[#aff4a6]/40' : 'via-red-500/40'} to-transparent`} />
+
+        <div className="p-8">
+          {/* Bouton fermer */}
+          <button
+            onClick={onClose}
+            className="absolute top-5 right-5 text-white/30 hover:text-white transition-colors"
+          >
+            <span className="material-icons text-[22px]">close</span>
           </button>
-        </div>
-        
-        <div className="px-8 pt-10 pb-12 flex flex-col items-center">
-          
-          <div className={`mb-2 px-4 py-1 rounded-full text-[10px] font-black tracking-[0.2em] uppercase ${isWon ? 'bg-[#aff4a6]/20 text-[#aff4a6]' : 'bg-red-500/20 text-red-400'}`}>
-            {isWon ? t.magnificent : t.tooBad}
+
+          {/* En-tête du résultat */}
+          <div className="text-center mb-8 mt-2">
+            <div
+              className={`inline-block mb-3 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border ${
+                isWon ? 'bg-[#aff4a6]/10 text-[#aff4a6] border-[#aff4a6]/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+              }`}
+              style={{ fontFamily: 'Manrope, sans-serif' }}
+            >
+              {isWon ? t.magnificent : t.tooBad}
+            </div>
+
+            <h2
+              className={`text-3xl font-black uppercase tracking-tighter ${isWon ? 'text-white' : 'text-white/80'}`}
+              style={{ fontFamily: 'Manrope, sans-serif' }}
+            >
+              {isWon ? t.congrats : t.gameOver}
+            </h2>
           </div>
-          
-          <h2 className={`text-4xl md:text-5xl font-extrabold tracking-tight mb-8 text-center ${isWon ? 'text-[#aff4a6]' : 'text-red-400'}`}>
-            {isWon ? t.congrats : t.gameOver}
-          </h2>
-          
-          {/* BOÎTE CENTRALE INTELLIGENTE */}
-          <div className="w-full mb-10 overflow-hidden rounded-2xl bg-[#131314] p-6 shadow-inner">
+
+          {/* Affichage du mot si PERDU */}
+          {!isWon && (
+            <div className="w-full mb-8 text-center bg-[#1f1f21] border border-[#484849]/20 rounded-xl py-4">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">
+                {t.secretWordWas}
+              </span>
+              <span
+                className="text-3xl font-black text-red-400 tracking-[0.1em]"
+                style={{ fontFamily: 'Manrope, sans-serif' }}
+              >
+                {solution}
+              </span>
+            </div>
+          )}
+
+          {/* STATISTIQUES OU INVITATION LOGIN */}
+          <div className="w-full mb-8">
             {user ? (
-              // Affichage des VRAIES stats si l'utilisateur est connecté
               <>
-                <h3 className="text-xs font-bold uppercase tracking-widest text-[#adaaab] mb-6 text-center">
+                <h3
+                  className="text-xs font-black uppercase tracking-widest text-white/60 mb-3 text-center"
+                  style={{ fontFamily: 'Manrope, sans-serif' }}
+                >
                   {t.statsTitle || "Statistiques"}
                 </h3>
-                <div className="flex justify-around items-end">
-                  <div className="flex flex-col items-center">
-                    <span className="text-3xl font-black text-white">{played}</span>
-                    <span className="text-[10px] font-bold uppercase text-[#adaaab] tracking-tighter">{t.statsPlayed || "Joués"}</span>
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="text-center bg-[#1f1f21] rounded-xl py-3 px-1 border border-[#484849]/20">
+                    <div className="text-2xl font-black text-white mb-0.5" style={{ fontFamily: 'Manrope, sans-serif' }}>{played}</div>
+                    <div className="text-[9px] text-white/40 leading-tight uppercase tracking-wider">{t.statsPlayed || "Joués"}</div>
                   </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-3xl font-black text-white">{winPct}<span className="text-sm ml-0.5">%</span></span>
-                    <span className="text-[10px] font-bold uppercase text-[#adaaab] tracking-tighter">Victoires</span>
+                  <div className="text-center bg-[#1f1f21] rounded-xl py-3 px-1 border border-[#484849]/20">
+                    <div className="text-2xl font-black text-white mb-0.5" style={{ fontFamily: 'Manrope, sans-serif' }}>{winPct}<span className="text-sm">%</span></div>
+                    <div className="text-[9px] text-white/40 leading-tight uppercase tracking-wider">Victoires</div>
                   </div>
-                  <div className="flex flex-col items-center relative">
+                  <div className="text-center bg-[#1f1f21] rounded-xl py-3 px-1 border border-[#484849]/20 relative">
                     {currentStreak > 0 && currentStreak === maxStreak && (
-                      <div className="absolute -top-6 bg-[#aff4a6] px-2 py-0.5 rounded text-[8px] font-black text-[#002a04]">
-                        NEW BEST
+                      <div className="absolute -top-2 -right-1 bg-[#aff4a6] px-1.5 py-0.5 rounded text-[8px] font-black text-[#002a04] shadow-[0_0_10px_rgba(175,244,166,0.3)]">
+                        NEW
                       </div>
                     )}
-                    <span className={`text-3xl font-black ${isWon ? 'text-[#aff4a6]' : 'text-white'}`}>{currentStreak}</span>
-                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${isWon ? 'text-[#aff4a6]' : 'text-[#adaaab]'}`}>Série</span>
+                    <div className={`text-2xl font-black mb-0.5 ${isWon ? 'text-[#aff4a6]' : 'text-white'}`} style={{ fontFamily: 'Manrope, sans-serif' }}>{currentStreak}</div>
+                    <div className={`text-[9px] leading-tight uppercase tracking-wider ${isWon ? 'text-[#aff4a6]/70' : 'text-white/40'}`}>Série</div>
                   </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-3xl font-black text-white">{maxStreak}</span>
-                    <span className="text-[10px] font-bold uppercase text-[#adaaab] tracking-tighter">Max</span>
+                  <div className="text-center bg-[#1f1f21] rounded-xl py-3 px-1 border border-[#484849]/20">
+                    <div className="text-2xl font-black text-white mb-0.5" style={{ fontFamily: 'Manrope, sans-serif' }}>{maxStreak}</div>
+                    <div className="text-[9px] text-white/40 leading-tight uppercase tracking-wider">Max</div>
                   </div>
                 </div>
               </>
             ) : (
-              // Invitation à se connecter si c'est un invité
-              <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-[#2d3748] rounded-full flex items-center justify-center mb-3">
-                  <span className="material-icons text-2xl text-[#8e98a8]">save</span>
+              <div className="bg-[#1f1f21] border border-[#484849]/20 rounded-xl p-6 text-center">
+                <div className="w-12 h-12 bg-[#131314] border border-[#484849]/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="material-icons text-2xl text-[#aff4a6]/60">save</span>
                 </div>
-                <p className="text-[#8e98a8] text-xs mb-4 leading-relaxed px-2">
+                <p className="text-white/40 text-xs mb-5 leading-relaxed px-2">
                   {t.loginForStats || "Connectez-vous pour sauvegarder votre progression et vos statistiques."}
                 </p>
-                <button 
-                  onClick={onLogin} 
-                  className="w-full py-3 bg-[#6b5cd6] text-white font-bold text-sm rounded-xl hover:bg-[#5849bc] transition-all flex items-center justify-center gap-2"
+                <button
+                  onClick={onLogin}
+                  className="w-full py-3 bg-[#aff4a6]/10 text-[#aff4a6] border border-[#aff4a6]/20 font-black rounded-xl hover:bg-[#aff4a6]/20 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                  style={{ fontFamily: 'Manrope, sans-serif' }}
                 >
                   <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4 bg-white rounded-full p-0.5" />
                   {t.login || "Connexion"}
@@ -117,38 +151,47 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
               </div>
             )}
           </div>
-          
-          {/* Affichage du mot si PERDU */}
-          {!isWon && (
-             <div className="w-full mb-8 text-center">
-               <span className="text-[10px] font-bold uppercase tracking-widest text-[#adaaab] block mb-2">{t.secretWordWas}</span>
-               <span className="text-4xl font-black text-white tracking-[0.2em]">{solution}</span>
-             </div>
-          )}
-          
+
+          <div className="h-px bg-gradient-to-r from-transparent via-[#484849]/40 to-transparent mb-6" />
+
+          {/* TIMER ET BOUTON DE PARTAGE */}
           <div className="w-full flex flex-col gap-4">
-            <div className="flex items-center justify-between text-[#adaaab] text-sm px-2">
+            <div className="flex items-center justify-between text-[#adaaab] px-2 mb-2">
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-widest">Next Parolle</span>
-                <span className="text-xl font-black text-white">{timeLeft}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest mb-1 text-white/40">Next Parolle</span>
+                <span className="text-2xl font-black text-white tracking-tighter" style={{ fontFamily: 'Manrope, sans-serif' }}>{timeLeft}</span>
               </div>
               <div className="h-10 w-px bg-[#484849]/50"></div>
               <div className="flex flex-col items-end">
-                <span className="text-[10px] font-bold uppercase tracking-widest">Share Result</span>
-                <span className="text-white">Parolle</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest mb-1 text-white/40">Share Result</span>
+                <span className="text-sm font-black text-white uppercase tracking-widest" style={{ fontFamily: 'Manrope, sans-serif' }}>Parolle</span>
               </div>
             </div>
-            
-            <button 
-              onClick={onClose} 
-              className={`w-full py-4 font-black text-lg rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-[0_12px_32px_rgba(175,244,166,0.2)] ${isWon ? 'bg-gradient-to-r from-[#aff4a6] to-[#7ce071] text-[#002a04]' : 'bg-[#4a5568] text-white hover:bg-[#718096]'}`}
-            >
-              {isWon ? 'SHARE RESULT' : t.closeBtn}
-              {isWon && <span className="material-icons font-black">share</span>}
-            </button>
+
+            {isWon ? (
+              <button
+                onClick={onClose}
+                className="w-full py-4 bg-[#aff4a6] text-[#002a04] font-black rounded-xl hover:bg-[#a2e599] active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest shadow-[0_4px_24px_rgba(175,244,166,0.2)]"
+                style={{ fontFamily: 'Manrope, sans-serif' }}
+              >
+                SHARE RESULT
+                <span className="material-icons text-[18px]">share</span>
+              </button>
+            ) : (
+              <button
+                onClick={onClose}
+                className="w-full py-4 bg-[#262627] text-white/70 font-black rounded-xl hover:bg-[#2c2c2d] hover:text-white active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest border border-[#484849]/40"
+                style={{ fontFamily: 'Manrope, sans-serif' }}
+              >
+                {t.closeBtn}
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Ligne d'accentuation basse */}
+        <div className="h-px bg-gradient-to-r from-transparent via-[#484849]/20 to-transparent" />
       </div>
     </div>
-  )
+  );
 }
