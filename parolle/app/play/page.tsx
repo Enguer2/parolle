@@ -15,6 +15,9 @@ export default function PlayGame() {
   const [isGameOver, setIsGameOver] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  const [isValidating, setIsValidating] = useState(false)
+  const [shakeRow, setShakeRow] = useState<number | null>(null)
+
   const [user, setUser] = useState<any>(null)
   const [userStats, setUserStats] = useState<any>(null) 
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -41,7 +44,7 @@ export default function PlayGame() {
       setUser(user)
 
       if (user) {
-        const { data: stats } = await supabase.from('user_stats').select('*').single()
+        const { data: stats } = await supabase.from('user_stats').select('*').eq('user_id', user.id).single()
         if (stats) setUserStats(stats)
       }
 
@@ -51,19 +54,16 @@ export default function PlayGame() {
 
       const saved = getFromLocal()
       
-      // 1. Si on a une sauvegarde pour le mot du jour
       if (saved?.gameState?.solution === dailyWord) {
         setGuesses(saved.gameState.guesses)
         setCurrentGuessIndex(saved.gameState.currentGuessIndex)
         setIsGameOver(saved.gameState.isGameOver)
         
-        // Si la partie est finie, on montre les résultats, SURTOUT PAS l'aide
         if (saved.gameState.isGameOver) {
           setShowModal(true)
           setShowHelpModal(false)
         }
       } 
-      // 2. Si c'est une toute nouvelle partie (pas de sauvegarde)
       else {
         const newStart = {
           ...defaultSettings,
@@ -80,7 +80,6 @@ export default function PlayGame() {
         setShowModal(false)
         saveToLocal(newStart)
         
-        // On affiche l'aide UNIQUEMENT ici
         setShowHelpModal(true)
       }
       setLoading(false)
@@ -88,7 +87,6 @@ export default function PlayGame() {
     initGame()
   }, [])
   
-
   useEffect(() => {
     if (!loading && solution) {
       const currentStore = getFromLocal() || defaultSettings
@@ -122,12 +120,11 @@ export default function PlayGame() {
   const updateStatsInDB = async (won: boolean, tries: number) => {
     if (!user) return; 
 
-    let currentStats = userStats;
-    
-    if (!currentStats) {
-      const { data } = await supabase.from('user_stats').select('*').single();
-      currentStats = data;
-    }
+    const { data: currentStats } = await supabase
+      .from('user_stats')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
 
     if (!currentStats) {
       const initialStats = {
@@ -180,14 +177,13 @@ export default function PlayGame() {
     return statuses
   }, [guesses, currentGuessIndex, solution])
 
-  // --- CORRECTION DU CLAVIER (Clic fantôme) ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isGameOver || showModal || showHelpModal || showStatsModal) return 
       const key = e.key.toUpperCase()
       
       if (key === 'ENTER') {
-        e.preventDefault() // <-- Empêche l'activation d'un bouton qui aurait le focus (comme "Règles")
+        e.preventDefault() 
         onKeyPress('ENTER')
       }
       else if (key === 'BACKSPACE') onKeyPress('BACKSPACE')
@@ -195,13 +191,16 @@ export default function PlayGame() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [guesses, currentGuessIndex, solution, isGameOver, showModal, showHelpModal, showStatsModal])
+  }, [guesses, currentGuessIndex, solution, isGameOver, showModal, showHelpModal, showStatsModal, isValidating])
 
   const onKeyPress = (key: string) => {
-    if (currentGuessIndex >= 6 || loading || isGameOver) return
+    // --- SÉCURITÉ : Bloque les touches si on vérifie le mot ou si le jeu est fini ---
+    if (currentGuessIndex >= 6 || loading || isGameOver || isValidating) return
     const currentGuess = guesses[currentGuessIndex]
+    
     if (key === 'BACKSPACE') updateCurrentGuess(currentGuess.slice(0, -1))
     else if (key === 'ENTER' && currentGuess.length === solution.length) submitGuess()
+    // Limite dynamiquement au nombre de lettres de la solution
     else if (currentGuess.length < solution.length && /^[A-Z]$/.test(key)) updateCurrentGuess(currentGuess + key)
   }
 
@@ -211,23 +210,49 @@ export default function PlayGame() {
     setGuesses(newGuesses)
   }
 
-  // --- CORRECTION DE LA VALIDATION ---
-  const submitGuess = () => {
+  // --- NOUVEAU : Fonction de vérification du dictionnaire via Supabase ---
+  const isWordValid = async (word: string) => {
+    const { data, error } = await supabase
+      .from('dictionary')
+      .select('word')
+      .ilike('word', word) // ilike permet de ne pas se soucier des majuscules/minuscules en DB
+      .maybeSingle();
+    
+    return !!data;
+  };
+
+  const submitGuess = async () => {
+    if (isValidating) return;
+    
     const currentGuess = guesses[currentGuessIndex]
+    if (currentGuess.length !== solution.length) return;
+
+    // --- VÉRIFICATION DICTIONNAIRE ---
+    setIsValidating(true);
+    const valid = await isWordValid(currentGuess);
+    setIsValidating(false);
+
+    if (!valid) {
+      setShakeRow(currentGuessIndex);
+      setTimeout(() => setShakeRow(null), 500);
+      return; 
+    }
+    // ---------------------------------
+
     const nextIndex = currentGuessIndex + 1
     setCurrentGuessIndex(nextIndex)
 
     if (currentGuess === solution) {
       setIsGameOver(true)
-      setShowHelpModal(false) // <-- SÉCURITÉ : Forcer la fermeture des règles
-      setShowStatsModal(false) // <-- SÉCURITÉ : Forcer la fermeture des stats
-      updateStatsInDB(true, nextIndex) 
+      setShowHelpModal(false) 
+      setShowStatsModal(false) 
+      await updateStatsInDB(true, nextIndex) 
       setTimeout(() => setShowModal(true), 800) 
     } else if (nextIndex === 6) {
       setIsGameOver(true)
-      setShowHelpModal(false) // <-- SÉCURITÉ
-      setShowStatsModal(false) // <-- SÉCURITÉ
-      updateStatsInDB(false, 6) 
+      setShowHelpModal(false) 
+      setShowStatsModal(false) 
+      await updateStatsInDB(false, 6) 
       setTimeout(() => setShowModal(true), 800) 
     }
   }
@@ -251,6 +276,19 @@ export default function PlayGame() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#1a202c] font-sans relative">
+      
+      {/* Styles injectés pour l'animation Shake de mot invalide */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-5px); }
+          40%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake {
+          animation: shake 0.5s ease-in-out;
+        }
+      `}} />
+
       <header className="w-full bg-[#1a202c] border-b border-[#2d3748] shadow-md z-20">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center">
@@ -258,10 +296,10 @@ export default function PlayGame() {
           </div>
 
           <div className="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-300">
-            <button className="hover:text-white transition">{t.play}</button>
+            {/*<button className="hover:text-white transition">{t.play}</button>*/}
             <button onClick={() => setShowHelpModal(true)} className="hover:text-white transition">{t.rules}</button>
             <button onClick={() => setShowStatsModal(true)} className="hover:text-white transition">{t.stats}</button>
-            <button className="hover:text-white transition">{t.settings}</button>
+            {/*<button className="hover:text-white transition">{t.settings}</button>*/}
             
             <div className="relative">
               <button onClick={() => setShowLangMenu(!showLangMenu)} className="hover:text-white transition flex items-center space-x-1">
@@ -317,8 +355,10 @@ export default function PlayGame() {
       <main className="flex-grow flex flex-col items-center justify-center p-4 text-white pt-8 pb-8">
         <div className="grid grid-rows-6 gap-2 mb-12 perspective-1000">
           {guesses.map((guess, rowIndex) => (
-            <div key={rowIndex} className="flex gap-2">
-              {Array.from({ length: solution.length || 4 }).map((_, colIndex) => {
+            <div key={rowIndex} className={`flex gap-2 ${shakeRow === rowIndex ? 'animate-shake' : ''}`}>
+              {/* Ajout dynamique de la classe animate-shake si shakeRow correspond au rowIndex */}
+              {/* Le nombre de colonnes s'adapte à la longueur du mot de la BDD (par défaut 5) */}
+              {Array.from({ length: solution.length || 5 }).map((_, colIndex) => {
                 const char = guess[colIndex]
                 const colorClass = getCellColor(guess, colIndex, rowIndex)
                 return (
@@ -367,6 +407,9 @@ export default function PlayGame() {
           isWon={isWon} 
           nbTries={nbTries} 
           solution={solution} 
+          stats={userStats} 
+          user={user} 
+          onLogin={handleLogin}
           onClose={() => setShowModal(false)} 
         />
       )}
