@@ -253,12 +253,22 @@ export default function Home() {
             <a className="text-gray-500 hover:text-[#aff4a6] transition-colors text-sm tracking-wide" href="#">{t.terms}</a>
             <a className="text-gray-500 hover:text-[#aff4a6] transition-colors text-sm tracking-wide" href="#">{t.contact}</a>
           </div>
-          <div className="flex gap-4">
-            <a className="w-10 h-10 rounded-full bg-[#1f1f21] flex items-center justify-center text-white hover:bg-[#aff4a6] hover:text-[#1f5e21] transition-all" href="#">
-              <span className="material-icons text-sm">share</span>
+          <div className="flex gap-4 items-center">
+            <a 
+              href="https://github.com/Enguer2" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1f1f21] border border-[#484849]/30 text-gray-400 hover:bg-[#aff4a6] hover:text-[#002a04] hover:border-[#aff4a6] transition-all group"
+            >
+              <img 
+                src="https://cdn-icons-png.flaticon.com/512/25/25231.png" 
+                alt="GitHub" 
+                className="w-5 h-5 invert group-hover:invert-0 transition-all" 
+              />
+              <span className="text-xs font-bold tracking-widest uppercase">Enguer2</span>
             </a>
             <a className="w-10 h-10 rounded-full bg-[#1f1f21] flex items-center justify-center text-white hover:bg-[#aff4a6] hover:text-[#1f5e21] transition-all" href="#">
-              <span className="material-icons text-sm">public</span>
+              <span className="material-icons text-sm">share</span>
             </a>
           </div>
         </div>

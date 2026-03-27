@@ -500,29 +500,69 @@ export default function PlayGame() {
         </div>
       </main>
 
-      {/* ── Footer ── */}
-      <footer className="w-full shrink-0 py-2 sm:py-4 mt-auto">
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-6 w-full max-w-screen-xl mx-auto px-4 sm:px-6">
+{/* ── Footer ── */}
+     <footer className="w-full shrink-0 mt-auto relative">
+  {/* Ligne d'accentuation supérieure pour la cohérence visuelle */}
+  <div className="h-px bg-gradient-to-r from-transparent via-[#484849]/30 to-transparent" />
+  
+  <div className="py-6 sm:py-8 bg-[#0e0e0f]">
+    <div className="flex flex-col md:flex-row justify-between items-center gap-6 w-full max-w-screen-xl mx-auto px-6">
+      
+      {/* Branding & Copyright */}
+      <div className="flex flex-col items-center md:items-start gap-1">
+        <div className="flex items-center gap-3">
           <span
-            className="text-[#aff4a6] font-black tracking-tight text-sm sm:text-base hidden sm:inline"
+            className="text-[#aff4a6] font-black tracking-[0.2em] text-lg uppercase"
             style={{ fontFamily: 'Manrope, sans-serif' }}
           >
             PAROLLE
           </span>
-          <div className="flex gap-4 sm:gap-6">
-            {['Privacy', 'Termini', 'Archiviu'].map(link => (
-              <a
-                key={link}
-                href="#"
-                className="text-[9px] sm:text-[10px] uppercase tracking-widest font-medium text-white/30 hover:text-white transition-colors"
-                style={{ fontFamily: 'Inter, sans-serif' }}
-              >
-                {link}
-              </a>
-            ))}
-          </div>
+          <span className="h-3 w-px bg-[#484849]/40 hidden sm:block"></span>
+          <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest hidden sm:block">
+            © 2026
+          </span>
         </div>
-      </footer>
+        <p className="text-[9px] text-white/10 uppercase tracking-widest font-medium">
+          A Sfida di Ogni Ghjornu
+        </p>
+      </div>
+
+      {/* Social & Links Container */}
+      <div className="flex flex-col sm:flex-row items-center gap-6">
+        {/* Badge GitHub Professionnel */}
+        <a 
+          href="https://github.com/Enguer2" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-[#131314] border border-[#484849]/40 text-white/40 hover:text-[#aff4a6] hover:border-[#aff4a6]/50 hover:shadow-[0_0_20px_rgba(175,244,166,0.1)] transition-all group"
+        >
+          <img 
+            src="https://cdn-icons-png.flaticon.com/512/25/25231.png" 
+            alt="GitHub" 
+            className="w-4 h-4 opacity-40 group-hover:opacity-100 invert group-hover:invert-0 transition-all" 
+          />
+          <span className="text-[11px] font-black tracking-widest uppercase" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            Enguer2
+          </span>
+        </a>
+
+        {/* Liens de navigation secondaire */}
+        <div className="flex gap-5">
+          {['Privacy', 'Termini', 'Archiviu'].map(link => (
+            <a
+              key={link}
+              href="#"
+              className="text-[10px] uppercase tracking-[0.15em] font-bold text-white/20 hover:text-white transition-all duration-300"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              {link}
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
 
       {/* ── Modals ── */}
       {showHelpModal && (
