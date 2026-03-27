@@ -11,23 +11,33 @@
 
 ### 📸 Aperçu / Preview
 
+### 📸 Aperçu / Preview
+
 <p align="center">
   <kbd>
     <img src="./screenshots/home.png" width="600" alt="Accueil Parolle" />
   </kbd>
   <br>
-  <em>L'interface d'accueil épurée et moderne.</em>
 </p>
 
 <p align="center">
-  <img src="./screenshots/game.png" width="380" alt="Interface de jeu" style="border-radius: 10px; margin: 5px;" />
-  <img src="./screenshots/howtoplay.png" width="380" alt="Aide" style="border-radius: 10px; margin: 5px;" />
+  <img src="./screenshots/play.png" width="450" alt="Interface de jeu" style="border-radius: 12px; border: 1px solid #48484930;" />
 </p>
 
 <p align="center">
-  <img src="./screenshots/result.png" width="250" alt="Résultat" style="border-radius: 8px; margin: 5px;" />
-  <img src="./screenshots/statics.png" width="250" alt="Statistiques" style="border-radius: 8px; margin: 5px;" />
-  <img src="./screenshots/win2.png" width="250" alt="Victoire" style="border-radius: 8px; margin: 5px;" />
+  <img src="./screenshots/howtoplay.png" width="350" alt="Aide" style="border-radius: 12px; border: 1px solid #48484930;" />
+</p>
+
+<p align="center">
+  <img src="./screenshots/result.png" width="350" alt="Résultat" style="border-radius: 12px; border: 1px solid #48484930;" />
+</p>
+
+<p align="center">
+  <img src="./screenshots/statics.png" width="350" alt="Statistiques" style="border-radius: 12px; border: 1px solid #48484930;" />
+</p>
+
+<p align="center">
+  <img src="./screenshots/win2.png" width="450" alt="Victoire" style="border-radius: 12px; border: 1px solid #48484930;" />
 </p>
 
 <p align="center">
