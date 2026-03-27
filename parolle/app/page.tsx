@@ -1,65 +1,141 @@
-import Image from "next/image";
+'use client'
+import { createBrowserClient } from '@supabase/ssr'
+import { useEffect, useState } from 'react'
+import { getFromLocal, saveToLocal, defaultSettings } from '@/lib/store'
+import Link from 'next/link'
 
 export default function Home() {
+  // 1. ÉTATS (States)
+  const [config, setConfig] = useState(defaultSettings)
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  // 2. INITIALISATION SUPABASE
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  // 3. EFFETS (useEffect)
+  useEffect(() => {
+    const initApp = async () => {
+      // Charger la sauvegarde locale
+      const savedData = getFromLocal()
+      if (savedData) {
+        setConfig(savedData)
+      } else {
+        saveToLocal(defaultSettings)
+      }
+
+      // Vérifier l'utilisateur connecté
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      
+      setLoading(false)
+    }
+
+    initApp()
+  }, [])
+
+  // 4. LOGIQUE (Handlers)
+  const changeLanguage = (newLang: string) => {
+    const newConfig = { 
+      ...config, 
+      settings: { ...config.settings, lang: newLang } 
+    }
+    setConfig(newConfig)
+    saveToLocal(newConfig)
+  }
+
+  const handleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+  }
+
+  // 5. AFFICHAGE (Render)
+  if (loading) return <div className="bg-[#1a2332] min-h-screen" />
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[#1a2332] text-white p-5">
+      
+      {/* SECTION LOGO STYLE WORDLE */}
+      <div className="flex gap-2 mb-8">
+        {[
+          { l: 'P', c: 'bg-[#22C55E]' },
+          { l: 'A', c: 'bg-[#EAB308]' },
+          { l: 'R', c: 'bg-[#4a5568]' },
+          { l: 'O', c: 'bg-[#4a5568]' },
+          { l: 'L', c: 'bg-[#22C55E]' },
+          { l: 'L', c: 'bg-[#EAB308]' },
+          { l: 'E', c: 'bg-[#4a5568]' },
+        ].map((item, i) => (
+          <div 
+            key={i} 
+            className={`${item.c} w-12 h-12 md:w-16 md:h-16 flex items-center justify-center text-2xl md:text-3xl font-bold rounded shadow-lg`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {item.l}
+          </div>
+        ))}
+      </div>
+
+      <p className="text-lg md:text-xl text-[#cbd5e0] font-light mb-12 tracking-wide text-center">
+        U ghjocu di parolle in lingua corsa
+      </p>
+
+      <div className="flex flex-col gap-4 w-full max-w-[420px]">
+        {user ? (
+          <div className="text-center">
+            <div className="bg-[#2d3748] p-8 rounded-xl border border-[#4a5568] mb-6">
+              <p className="text-xl mb-2 italic text-green-400">Bonghjornu !</p>
+              <h2 className="text-2xl font-bold mb-6">{user.user_metadata.full_name}</h2>
+              <button className="w-full py-4 bg-[#28a745] hover:bg-[#218838] text-white rounded-lg font-bold text-lg transition-all transform hover:-translate-y-1 shadow-md">
+                Lancià una partita
+              </button>
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="text-gray-400 hover:text-red-400 text-sm underline transition-colors"
+            >
+              Si disconnectà (Se déconnecter)
+            </button>
+          </div>
+        ) : (
+          <>
+            <Link href="/play" className="w-full">
+              <button className="w-full py-4 bg-[#28a745] hover:bg-[#218838] text-white rounded-lg font-bold text-lg transition-all transform hover:-translate-y-1 shadow-md">
+                Lancià una partita (ou "Ghjuvà senza cunnessione")
+              </button>
+            </Link>
+
+            <button 
+              onClick={handleLogin}
+              className="w-full py-4 bg-white hover:bg-[#f7fafc] text-[#1a2332] rounded-lg font-bold text-lg flex items-center justify-center gap-3 transition-all transform hover:-translate-y-1 shadow-md"
+            >
+              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+              Cuntinuà cù Google
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* FOOTER AVEC LANGUE ACTUELLE (Pour tester) */}
+      <footer className="mt-20 text-[#4a5568] text-sm flex flex-col items-center gap-2">
+        <div>&copy; 2026 Parolle - Creatu per a lingua corsa</div>
+        <div className="text-xs opacity-50 uppercase tracking-widest">
+          Lingua selezziunata : {config.settings.lang}
         </div>
-      </main>
-    </div>
-  );
+      </footer>
+    </main>
+  )
 }
+
+
