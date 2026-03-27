@@ -5,22 +5,23 @@ interface ResultModalProps {
   isWon: boolean;
   nbTries: number;
   solution: string;
+  guesses: string[];
+  language: string; // <-- AJOUTE CECI
   stats?: any;
   user?: any;
   onLogin?: () => void;
   onClose: () => void;
 }
 
-export default function ResultModal({ t, isWon, nbTries, solution, stats, user, onLogin, onClose }: ResultModalProps) {
-  // --- Calcul des statistiques dynamiques ---
+export default function ResultModal({ t, isWon, nbTries,language, solution, guesses, stats, user, onLogin, onClose }: ResultModalProps) {
   const played = stats?.games_played || (isWon ? 1 : 0);
   const won = stats?.games_won || (isWon ? 1 : 0);
   const winPct = played > 0 ? Math.round((won / played) * 100) : 0;
   const currentStreak = stats?.current_streak || (isWon ? 1 : 0);
   const maxStreak = stats?.max_streak || (isWon ? 1 : 0);
 
-  // --- Compte à rebours dynamique (Cycle de 10 min) ---
   const [timeLeft, setTimeLeft] = useState<string>("00:00:00");
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     const updateTimer = () => {
@@ -46,17 +47,37 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
     return () => clearInterval(timerId);
   }, []);
 
+  const handleShare = () => {
+  const grid = guesses
+    .filter(g => g !== "")
+    .map(guess => {
+      return guess.split('').map((char, i) => {
+        if (char === solution[i]) return '🟩';
+        if (solution.includes(char)) return '🟨';
+        return '⬜';
+      }).join('');
+    })
+    .join('\n');
+
+  const shareText = `🎯 Parolle (${language.toUpperCase()}) ${isWon ? nbTries : 'X'}/6\n\n${grid}\n\n🕹️ Ghjucate quì : https://parolle-corsica.vercel.app`;
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareText).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
+  }
+};
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
       <div
         className="bg-[#131314] w-full max-w-[450px] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.7)] relative border border-[#484849]/30 overflow-hidden"
         style={{ fontFamily: 'Inter, sans-serif' }}
       >
-        {/* Ligne d'accentuation haute (Verte si gagné, Rouge sombre si perdu) */}
         <div className={`h-px bg-gradient-to-r from-transparent ${isWon ? 'via-[#aff4a6]/40' : 'via-red-500/40'} to-transparent`} />
 
         <div className="p-8">
-          {/* Bouton fermer */}
           <button
             onClick={onClose}
             className="absolute top-5 right-5 text-white/30 hover:text-white transition-colors"
@@ -64,7 +85,6 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
             <span className="material-icons text-[22px]">close</span>
           </button>
 
-          {/* En-tête du résultat */}
           <div className="text-center mb-8 mt-2">
             <div
               className={`inline-block mb-3 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border ${
@@ -83,7 +103,6 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
             </h2>
           </div>
 
-          {/* Affichage du mot si PERDU */}
           {!isWon && (
             <div className="w-full mb-8 text-center bg-[#1f1f21] border border-[#484849]/20 rounded-xl py-4">
               <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">
@@ -98,7 +117,6 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
             </div>
           )}
 
-          {/* STATISTIQUES OU INVITATION LOGIN */}
           <div className="w-full mb-8">
             {user ? (
               <>
@@ -154,7 +172,6 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
 
           <div className="h-px bg-gradient-to-r from-transparent via-[#484849]/40 to-transparent mb-6" />
 
-          {/* TIMER ET BOUTON DE PARTAGE */}
           <div className="w-full flex flex-col gap-4">
             <div className="flex items-center justify-between text-[#adaaab] px-2 mb-2">
               <div className="flex flex-col">
@@ -170,12 +187,16 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
 
             {isWon ? (
               <button
-                onClick={onClose}
-                className="w-full py-4 bg-[#aff4a6] text-[#002a04] font-black rounded-xl hover:bg-[#a2e599] active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest shadow-[0_4px_24px_rgba(175,244,166,0.2)]"
+                onClick={handleShare}
+                className={`w-full py-4 font-black rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest ${
+                  isCopied 
+                    ? 'bg-white text-[#002a04] shadow-[0_0_20px_rgba(255,255,255,0.4)]' 
+                    : 'bg-[#aff4a6] text-[#002a04] hover:bg-[#a2e599] shadow-[0_4px_24px_rgba(175,244,166,0.2)]'
+                }`}
                 style={{ fontFamily: 'Manrope, sans-serif' }}
               >
-                SHARE RESULT
-                <span className="material-icons text-[18px]">share</span>
+                {isCopied ? 'COPIÉ ! ✅' : 'SHARE RESULT'}
+                {!isCopied && <span className="material-icons text-[18px]">share</span>}
               </button>
             ) : (
               <button
@@ -189,7 +210,6 @@ export default function ResultModal({ t, isWon, nbTries, solution, stats, user, 
           </div>
         </div>
 
-        {/* Ligne d'accentuation basse */}
         <div className="h-px bg-gradient-to-r from-transparent via-[#484849]/20 to-transparent" />
       </div>
     </div>

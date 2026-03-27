@@ -575,6 +575,8 @@ export default function PlayGame() {
           isWon={isWon}
           nbTries={nbTries}
           solution={solution}
+          guesses={guesses}
+          language={language}
           stats={userStats}
           user={user}
           onLogin={handleLogin}
