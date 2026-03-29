@@ -55,7 +55,7 @@
 ### 💻 Stack Technique
 * **Frontend :** Next.js (App Router), React, TypeScript.
 * **Styling :** Tailwind CSS.
-* **Backend & BDD :** Supabase (PostgreSQL, Authentication OAuth).
+* **Backend & DB :** Supabase (PostgreSQL, Authentication OAuth).
 * **Déploiement :** Vercel.
 
 ---
@@ -85,7 +85,7 @@ Si vous souhaitez faire tourner le projet en local / *If you want to run the pro
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/Enguer2/parolle-corsica.git](https://github.com/Enguer2/parolle-corsica.git)
+   git clone [https://github.com/Enguer2/parolle-corsica.git]
    cd parolle-corsica/parolle
    ```
 

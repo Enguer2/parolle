@@ -227,8 +227,8 @@ export default function Home() {
           <div className="p-8 rounded-2xl border border-[#484849]/10 flex flex-col justify-between group hover:bg-[#19191b] transition-all md:scale-110 md:z-20 bg-gradient-to-br from-[#131314] to-[#262627]">
             <span className="material-icons text-[#f9e281] text-4xl mb-4">language</span>
             <div>
-              <h3 className="text-3xl font-bold">{t.language}</h3>
-              <p className="text-[#adaaab] text-sm uppercase tracking-wider mt-1">{t.preserveFuture}</p>
+              <h3 className="text-3xl font-bold">LENGUA</h3>
+              <p className="text-[#adaaab] text-sm uppercase tracking-wider mt-1">Priservà u nostru avvene</p>
             </div>
           </div>
           <div className="p-8 rounded-2xl bg-[#131314] border border-[#484849]/10 flex flex-col justify-between group hover:bg-[#19191b] transition-all">

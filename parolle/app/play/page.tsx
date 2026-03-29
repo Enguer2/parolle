@@ -124,7 +124,10 @@ export default function PlayGame() {
       .eq('user_id', user.id)
       .single();
 
+    let isNewPlayer = false; // <-- On ajoute cette variable pour savoir si c'est son 1er jeu
+
     if (!currentStats) {
+      isNewPlayer = true;
       const initialStats = {
         user_id: user.id,
         games_played: 1,
@@ -137,31 +140,37 @@ export default function PlayGame() {
       };
       await supabase.from('user_stats').insert(initialStats);
       setUserStats(initialStats);
-      return;
+    } else {
+      const newPlayed = currentStats.games_played + 1;
+      const newWon = won ? currentStats.games_won + 1 : currentStats.games_won;
+      const newStreak = won ? currentStats.current_streak + 1 : 0;
+      const newMaxStreak = Math.max(currentStats.max_streak, newStreak);
+
+      let newDistribution = [...currentStats.guess_distribution];
+      if (won && tries >= 1 && tries <= 6) {
+        newDistribution[tries - 1] += 1;
+      }
+
+      const updatedStats = {
+        games_played: newPlayed,
+        games_won: newWon,
+        current_streak: newStreak,
+        max_streak: newMaxStreak,
+        guess_distribution: newDistribution,
+        last_won_at: won ? new Date().toISOString() : currentStats.last_won_at,
+        updated_at: new Date().toISOString()
+      };
+
+      await supabase.from('user_stats').update(updatedStats).eq('user_id', user.id);
+      setUserStats({ ...currentStats, ...updatedStats });
     }
 
-    const newPlayed = currentStats.games_played + 1;
-    const newWon = won ? currentStats.games_won + 1 : currentStats.games_won;
-    const newStreak = won ? currentStats.current_streak + 1 : 0;
-    const newMaxStreak = Math.max(currentStats.max_streak, newStreak);
-
-    let newDistribution = [...currentStats.guess_distribution];
-    if (won && tries >= 1 && tries <= 6) {
-      newDistribution[tries - 1] += 1;
+    if (isNewPlayer || won) {
+      await supabase.rpc('increment_global_stats', { 
+        new_player: isNewPlayer, 
+        new_word: won 
+      });
     }
-
-    const updatedStats = {
-      games_played: newPlayed,
-      games_won: newWon,
-      current_streak: newStreak,
-      max_streak: newMaxStreak,
-      guess_distribution: newDistribution,
-      last_won_at: won ? new Date().toISOString() : currentStats.last_won_at,
-      updated_at: new Date().toISOString()
-    };
-
-    await supabase.from('user_stats').update(updatedStats).eq('user_id', user.id);
-    setUserStats({ ...currentStats, ...updatedStats });
   };
 
   const keyStatuses = useMemo(() => {
@@ -257,12 +266,9 @@ export default function PlayGame() {
 
   const getKeyStyle = (char: string) => {
     const status = keyStatuses[char]
-    if (status === 'correct')
-      return 'bg-[#6fb069] text-[#002a04]'
-    if (status === 'present')
-      return 'bg-[#6e5e03] text-[#f9e281]'
-    if (status === 'absent')
-      return 'bg-[#131314] text-[#484849]'
+    if (status === 'correct') return 'bg-[#6fb069] text-[#002a04]'
+    if (status === 'present') return 'bg-[#6e5e03] text-[#f9e281]'
+    if (status === 'absent') return 'bg-[#131314] text-[#484849]'
     return 'bg-[#1f1f21] text-white hover:bg-[#2c2c2d]'
   }
 
@@ -282,6 +288,7 @@ export default function PlayGame() {
 
   return (
     <div
+      // FIX: h-[100dvh] + overflow-hidden garantit qu'on ne scroll jamais hors du viewport
       className="flex flex-col h-[100dvh] bg-[#0e0e0f] text-white overflow-hidden"
       style={{ fontFamily: 'Inter, sans-serif' }}
     >
@@ -296,141 +303,141 @@ export default function PlayGame() {
       `}} />
 
       {/* ── TopAppBar ── */}
+      {/* FIX: py réduit sur mobile pour économiser de l'espace vertical */}
       <header className="shrink-0 z-50 bg-[#0e0e0f]">
-        <div className="flex justify-between items-center w-full px-4 sm:px-6 py-2 sm:py-3 max-w-screen-xl mx-auto">
-          <div className="flex items-center gap-4">
-            <h1
-              className="text-xl sm:text-2xl font-black tracking-tighter text-[#aff4a6] uppercase select-none"
-              style={{ fontFamily: 'Manrope, sans-serif' }}
-            >
-              PAROLLE
-            </h1>
-          </div>
+        <div className="flex justify-between items-center w-full px-3 sm:px-6 py-2 max-w-screen-xl mx-auto">
+          <h1
+            className="text-lg sm:text-2xl font-black tracking-tighter text-[#aff4a6] uppercase select-none"
+            style={{ fontFamily: 'Manrope, sans-serif' }}
+          >
+            PAROLLE
+          </h1>
 
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div className="flex gap-3 sm:gap-4 items-center">
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Language */}
+            <div className="relative">
+              <button
+                onClick={() => setShowLangMenu(!showLangMenu)}
+                className="flex items-center gap-1 text-white/50 hover:text-[#aff4a6] transition-colors"
+                title="Langue"
+              >
+                <span className="material-icons text-[18px]">language</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">{language}</span>
+              </button>
+              {showLangMenu && (
+                <div className="absolute right-0 top-full mt-2 w-32 rounded-xl shadow-xl bg-[#1f1f21] border border-[#484849]/40 z-50 overflow-hidden">
+                  {(Object.keys(languageNames) as Language[]).map(lang => (
+                    <button
+                      key={lang}
+                      onClick={() => handleLanguageChange(lang)}
+                      className={`block w-full text-left px-4 py-2 text-xs transition-colors ${
+                        language === lang
+                          ? 'bg-[#aff4a6]/10 text-[#aff4a6] font-bold'
+                          : 'text-white/70 hover:bg-[#2c2c2d] hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'Manrope, sans-serif' }}
+                    >
+                      {languageNames[lang]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button onClick={() => setShowStatsModal(true)} className="text-white/50 hover:text-[#aff4a6] transition-colors" title={t.stats}>
+              <span className="material-icons text-[20px]">leaderboard</span>
+            </button>
+
+            <button onClick={() => setShowHelpModal(true)} className="text-white/50 hover:text-[#aff4a6] transition-colors" title={t.rules}>
+              <span className="material-icons text-[20px]">help</span>
+            </button>
+
+            {user ? (
               <div className="relative">
                 <button
-                  onClick={() => setShowLangMenu(!showLangMenu)}
-                  className="flex items-center gap-1 text-white/50 hover:text-[#aff4a6] transition-colors"
-                  title="Langue"
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-1.5 bg-[#1f1f21] border border-[#484849]/40 text-white text-xs font-bold px-2 py-1 rounded-full hover:border-[#aff4a6]/30 transition-all"
+                  style={{ fontFamily: 'Manrope, sans-serif' }}
                 >
-                  <span className="material-icons text-[18px] sm:text-[20px]">language</span>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider hidden sm:inline">{language}</span>
+                  <span className="w-4 h-4 rounded-full bg-[#aff4a6] text-[#002a04] flex items-center justify-center text-[10px] font-black uppercase">
+                    {(user.user_metadata?.full_name?.split(' ')[0] || t.player)?.[0]}
+                  </span>
+                  <span className="hidden sm:inline">{user.user_metadata?.full_name?.split(' ')[0] || t.player}</span>
+                  <span className="material-icons text-[14px] text-white/40">arrow_drop_down</span>
                 </button>
-                {showLangMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-32 sm:w-36 rounded-xl shadow-xl bg-[#1f1f21] border border-[#484849]/40 z-50 overflow-hidden">
-                    {(Object.keys(languageNames) as Language[]).map(lang => (
-                      <button
-                        key={lang}
-                        onClick={() => handleLanguageChange(lang)}
-                        className={`block w-full text-left px-4 py-2 sm:py-2.5 text-xs sm:text-sm transition-colors ${
-                          language === lang
-                            ? 'bg-[#aff4a6]/10 text-[#aff4a6] font-bold'
-                            : 'text-white/70 hover:bg-[#2c2c2d] hover:text-white'
-                        }`}
-                        style={{ fontFamily: 'Manrope, sans-serif' }}
-                      >
-                        {languageNames[lang]}
-                      </button>
-                    ))}
+                {showUserMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-44 rounded-xl shadow-xl bg-[#1f1f21] border border-[#484849]/40 z-50 overflow-hidden">
+                    <div className="px-4 py-2.5 text-xs text-white/40 border-b border-[#484849]/40 truncate">{user.email}</div>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-xs text-[#ff7351] hover:bg-[#2c2c2d] font-bold transition-colors"
+                      style={{ fontFamily: 'Manrope, sans-serif' }}
+                    >
+                      {t.logout}
+                    </button>
                   </div>
                 )}
               </div>
-
+            ) : (
               <button
-                onClick={() => setShowStatsModal(true)}
-                className="text-white/50 hover:text-[#aff4a6] transition-colors"
-                title={t.stats}
+                onClick={handleLogin}
+                className="flex items-center gap-1.5 bg-[#aff4a6]/10 border border-[#aff4a6]/20 text-[#aff4a6] text-[10px] font-black px-2.5 py-1 rounded-full hover:bg-[#aff4a6]/20 transition-all uppercase tracking-widest"
+                style={{ fontFamily: 'Manrope, sans-serif' }}
               >
-                <span className="material-icons text-[20px] sm:text-[22px]">leaderboard</span>
+                <img src="https://www.google.com/favicon.ico" alt="Google" className="w-3 h-3 bg-white rounded-full p-0.5" />
+                <span className="hidden sm:inline">{t.login}</span>
               </button>
-
-              <button
-                onClick={() => setShowHelpModal(true)}
-                className="text-white/50 hover:text-[#aff4a6] transition-colors"
-                title={t.rules}
-              >
-                <span className="material-icons text-[20px] sm:text-[22px]">help</span>
-              </button>
-
-              {user ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-1.5 sm:gap-2 bg-[#1f1f21] border border-[#484849]/40 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full hover:border-[#aff4a6]/30 transition-all"
-                    style={{ fontFamily: 'Manrope, sans-serif' }}
-                  >
-                    <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#aff4a6] text-[#002a04] flex items-center justify-center text-[10px] sm:text-xs font-black uppercase">
-                      {(user.user_metadata?.full_name?.split(' ')[0] || t.player)?.[0]}
-                    </span>
-                    <span className="hidden sm:inline">{user.user_metadata?.full_name?.split(' ')[0] || t.player}</span>
-                    <span className="material-icons text-[14px] sm:text-[16px] text-white/40">arrow_drop_down</span>
-                  </button>
-                  {showUserMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-48 rounded-xl shadow-xl bg-[#1f1f21] border border-[#484849]/40 z-50 overflow-hidden">
-                      <div className="px-4 py-2.5 text-xs text-white/40 border-b border-[#484849]/40 truncate">
-                        {user.email}
-                      </div>
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-xs sm:text-sm text-[#ff7351] hover:bg-[#2c2c2d] font-bold transition-colors"
-                        style={{ fontFamily: 'Manrope, sans-serif' }}
-                      >
-                        {t.logout}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <button
-                  onClick={handleLogin}
-                  className="flex items-center gap-1.5 sm:gap-2 bg-[#aff4a6]/10 border border-[#aff4a6]/20 text-[#aff4a6] text-[10px] sm:text-xs font-black px-3 py-1 sm:py-1.5 rounded-full hover:bg-[#aff4a6]/20 transition-all uppercase tracking-widest"
-                  style={{ fontFamily: 'Manrope, sans-serif' }}
-                >
-                  <img src="https://www.google.com/favicon.ico" alt="Google" className="w-3 h-3 sm:w-3.5 sm:h-3.5 bg-white rounded-full p-0.5" />
-                  <span className="hidden sm:inline">{t.login}</span>
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
         <div className="h-px bg-gradient-to-r from-transparent via-[#484849]/40 to-transparent" />
       </header>
 
-      {/* ── Main ── */}
-      <main className="flex-grow flex flex-col items-center justify-between px-2 sm:px-4 py-2 sm:py-4 max-w-3xl mx-auto w-full min-h-0">
+      {/* ── Main ──
+        FIX : on remplace justify-between par justify-center + gap contrôlé.
+        justify-between étirait trop les éléments sur petits écrans.
+        On utilise gap-y adaptatif pour coller les éléments de façon cohérente.
+      */}
+      <main className="flex-1 flex flex-col items-center justify-center px-2 sm:px-4 py-1 sm:py-3 max-w-3xl mx-auto w-full min-h-0 gap-y-1 sm:gap-y-3">
 
-        {/* Game header */}
-        <div className="w-full shrink-0 mb-2 sm:mb-4 text-center">
+        {/* Game header — caché sur très petits écrans si manque de place */}
+        <div className="w-full shrink-0 text-center">
           <h2
-            className="font-black text-2xl sm:text-3xl md:text-4xl tracking-tighter mb-1.5 sm:mb-2"
+            className="font-black text-xl sm:text-3xl md:text-4xl tracking-tighter mb-0.5 sm:mb-2"
             style={{ fontFamily: 'Manrope, sans-serif' }}
           >
             Truvate a Parolla
           </h2>
           {userStats && (
             <div className="flex justify-center items-center gap-2">
-              <span className="bg-[#1f1f21] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black tracking-widest uppercase text-[#aff4a6] border border-[#aff4a6]/10"
-                style={{ fontFamily: 'Manrope, sans-serif' }}>
+              <span
+                className="bg-[#1f1f21] px-2 py-0.5 rounded-full text-[9px] font-black tracking-widest uppercase text-[#aff4a6] border border-[#aff4a6]/10"
+                style={{ fontFamily: 'Manrope, sans-serif' }}
+              >
                 {t.stats}: {userStats.games_played}
               </span>
               {userStats.current_streak > 0 && (
-                <span className="bg-[#1f1f21] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black tracking-widest uppercase text-[#f9e281]/80 border border-[#f9e281]/10"
-                    style={{ fontFamily: 'Manrope, sans-serif' }}>
-                    {t.streak}: {userStats.current_streak}
+                <span
+                  className="bg-[#1f1f21] px-2 py-0.5 rounded-full text-[9px] font-black tracking-widest uppercase text-[#f9e281]/80 border border-[#f9e281]/10"
+                  style={{ fontFamily: 'Manrope, sans-serif' }}
+                >
+                  {t.streak}: {userStats.current_streak}
                 </span>
               )}
             </div>
           )}
         </div>
 
-        {/* ── Word Grid ── */}
-        <div className="flex-1 w-full max-w-[280px] sm:max-w-[350px] flex flex-col justify-center gap-1.5 sm:gap-2 min-h-0 mb-4">
+        {/* ── Word Grid ──
+          FIX : on supprime flex-1 qui forçait la grille à grandir indéfiniment.
+          On fixe une taille max via max-h et on laisse les cellules s'adapter via aspect-square.
+          La grille ne dépasse plus jamais son conteneur.
+        */}
+        <div className="w-full shrink-0 flex flex-col justify-center gap-1 sm:gap-1.5 max-w-[260px] sm:max-w-[330px]">
           {guesses.map((guess, rowIndex) => (
             <div
               key={rowIndex}
-              className={`flex justify-center gap-1.5 sm:gap-2 w-full ${shakeRow === rowIndex ? 'animate-shake' : ''}`}
+              className={`flex justify-center gap-1 sm:gap-1.5 w-full ${shakeRow === rowIndex ? 'animate-shake' : ''}`}
             >
               {Array.from({ length: solution.length || 5 }).map((_, colIndex) => {
                 const char = guess[colIndex]
@@ -442,7 +449,8 @@ export default function PlayGame() {
                 return (
                   <div
                     key={colIndex}
-                    className={`flex-1 aspect-square max-w-[55px] sm:max-w-[60px] flex items-center justify-center text-xl sm:text-2xl md:text-3xl font-black rounded-lg sm:rounded-xl border transition-all duration-300 ${
+                    // FIX: max-w réduit sur mobile (48px au lieu de 55px) pour éviter le débordement
+                    className={`flex-1 aspect-square max-w-[48px] sm:max-w-[58px] flex items-center justify-center text-lg sm:text-2xl md:text-3xl font-black rounded-lg border transition-all duration-300 ${
                       isRevealed && colorClass
                         ? `${colorClass} border-transparent`
                         : isCurrentRow && char
@@ -464,24 +472,28 @@ export default function PlayGame() {
           ))}
         </div>
 
-        {/* ── Keyboard ── */}
-        <div className="w-full shrink-0 flex flex-col items-center gap-1.5 sm:gap-2 max-w-[500px] pb-2">
+        {/* ── Keyboard ──
+          FIX : hauteur des touches réduite sur mobile (h-9 = 36px au lieu de 40px).
+          FIX : max-w réduit à 440px pour coller dans les petits viewports.
+          FIX : gap réduit à 0.5 sur mobile pour ne pas dépasser en largeur.
+        */}
+        <div className="w-full shrink-0 flex flex-col items-center gap-1 sm:gap-1.5 max-w-[440px]">
           {['AZERTYUIOP', 'QSDFGHJKLM', 'WXCVBN'].map((row, rowIdx) => (
-            <div key={rowIdx} className={`flex gap-1 sm:gap-1.5 ${rowIdx === 1 ? 'w-[95%]' : 'w-full'}`}>
+            <div key={rowIdx} className={`flex gap-0.5 sm:gap-1 ${rowIdx === 1 ? 'w-[95%]' : 'w-full'}`}>
               {rowIdx === 2 && (
                 <button
                   onClick={() => onKeyPress('ENTER')}
-                  className="px-2 sm:px-3 h-10 sm:h-12 bg-[#262627] hover:bg-[#2c2c2d] rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest uppercase transition-all active:scale-95 flex items-center justify-center"
+                  className="px-1.5 sm:px-3 h-9 sm:h-11 bg-[#262627] hover:bg-[#2c2c2d] rounded-lg text-[8px] sm:text-[10px] font-black tracking-widest uppercase transition-all active:scale-95 flex items-center justify-center whitespace-nowrap"
                   style={{ fontFamily: 'Manrope, sans-serif' }}
                 >
-                  {t.enterKey ?? 'ENTER'}
+                  {t.enterKey ?? 'OK'}
                 </button>
               )}
               {row.split('').map(char => (
                 <button
                   key={char}
                   onClick={() => onKeyPress(char)}
-                  className={`flex-1 h-10 sm:h-12 rounded-lg sm:rounded-xl text-xs sm:text-sm font-black transition-all duration-300 active:scale-95 flex items-center justify-center ${getKeyStyle(char)}`}
+                  className={`flex-1 h-9 sm:h-11 rounded-lg text-xs sm:text-sm font-black transition-all duration-300 active:scale-95 flex items-center justify-center ${getKeyStyle(char)}`}
                   style={{ fontFamily: 'Manrope, sans-serif' }}
                 >
                   {char}
@@ -490,9 +502,9 @@ export default function PlayGame() {
               {rowIdx === 2 && (
                 <button
                   onClick={() => onKeyPress('BACKSPACE')}
-                  className="px-2 sm:px-3 h-10 sm:h-12 bg-[#262627] hover:bg-[#2c2c2d] rounded-lg sm:rounded-xl transition-all active:scale-95 flex items-center justify-center"
+                  className="px-1.5 sm:px-3 h-9 sm:h-11 bg-[#262627] hover:bg-[#2c2c2d] rounded-lg transition-all active:scale-95 flex items-center justify-center"
                 >
-                  <span className="material-icons text-white text-[18px] sm:text-[20px]">backspace</span>
+                  <span className="material-icons text-white text-[16px] sm:text-[20px]">backspace</span>
                 </button>
               )}
             </div>
@@ -500,98 +512,97 @@ export default function PlayGame() {
         </div>
       </main>
 
-{/* ── Footer ── */}
-     <footer className="w-full shrink-0 mt-auto relative">
-  {/* Ligne d'accentuation supérieure pour la cohérence visuelle */}
-  <div className="h-px bg-gradient-to-r from-transparent via-[#484849]/30 to-transparent" />
-  
-  <div className="py-6 sm:py-8 bg-[#0e0e0f]">
-    <div className="flex flex-col md:flex-row justify-between items-center gap-6 w-full max-w-screen-xl mx-auto px-6">
-      
-      {/* Branding & Copyright */}
-      <div className="flex flex-col items-center md:items-start gap-1">
-        <div className="flex items-center gap-3">
-          <span
-            className="text-[#aff4a6] font-black tracking-[0.2em] text-lg uppercase"
-            style={{ fontFamily: 'Manrope, sans-serif' }}
-          >
-            PAROLLE
-          </span>
-          <span className="h-3 w-px bg-[#484849]/40 hidden sm:block"></span>
-          <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest hidden sm:block">
-            © 2026
-          </span>
+      {/* ── Footer ──
+        FIX : le footer est masqué sur mobile (hidden sm:block) pour libérer tout l'espace
+        vertical pour la grille et le clavier. Il réapparaît à partir de sm (640px).
+        Sur mobile, l'espace est trop précieux pour un footer décoratif.
+      */}
+      <footer className="hidden sm:block w-full shrink-0">
+        <div className="h-px bg-gradient-to-r from-transparent via-[#484849]/30 to-transparent" />
+        <div className="py-5 bg-[#0e0e0f]">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full max-w-screen-xl mx-auto px-6">
+            <div className="flex flex-col items-center md:items-start gap-1">
+              <div className="flex items-center gap-3">
+                <span
+                  className="text-[#aff4a6] font-black tracking-[0.2em] text-lg uppercase"
+                  style={{ fontFamily: 'Manrope, sans-serif' }}
+                >
+                  PAROLLE
+                </span>
+                <span className="h-3 w-px bg-[#484849]/40"></span>
+                <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">© 2026</span>
+              </div>
+              <p className="text-[9px] text-white/10 uppercase tracking-widest font-medium">
+                A Sfida di Ogni Ghjornu
+              </p>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <a
+                href="https://github.com/Enguer2"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-[#131314] border border-[#484849]/40 text-white/40 hover:text-[#aff4a6] hover:border-[#aff4a6]/50 hover:shadow-[0_0_20px_rgba(175,244,166,0.1)] transition-all group"
+              >
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/25/25231.png"
+                  alt="GitHub"
+                  className="w-4 h-4 opacity-40 group-hover:opacity-100 invert group-hover:invert-0 transition-all"
+                />
+                <span className="text-[11px] font-black tracking-widest uppercase" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                  Enguer2
+                </span>
+              </a>
+              <div className="flex gap-5">
+                {['Privacy', 'Contact'].map(link => (
+                  <a
+                    key={link}
+                    href="#"
+                    className="text-[10px] uppercase tracking-[0.15em] font-bold text-white/20 hover:text-white transition-all duration-300"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                  >
+                    {link}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="text-[9px] text-white/10 uppercase tracking-widest font-medium">
-          A Sfida di Ogni Ghjornu
-        </p>
-      </div>
+      </footer>
 
-      {/* Social & Links Container */}
-      <div className="flex flex-col sm:flex-row items-center gap-6">
-        {/* Badge GitHub Professionnel */}
-        <a 
-          href="https://github.com/Enguer2" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-[#131314] border border-[#484849]/40 text-white/40 hover:text-[#aff4a6] hover:border-[#aff4a6]/50 hover:shadow-[0_0_20px_rgba(175,244,166,0.1)] transition-all group"
-        >
-          <img 
-            src="https://cdn-icons-png.flaticon.com/512/25/25231.png" 
-            alt="GitHub" 
-            className="w-4 h-4 opacity-40 group-hover:opacity-100 invert group-hover:invert-0 transition-all" 
-          />
-          <span className="text-[11px] font-black tracking-widest uppercase" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Enguer2
-          </span>
-        </a>
-
-        {/* Liens de navigation secondaire */}
-        <div className="flex gap-5">
-          {['Privacy', 'Termini', 'Archiviu'].map(link => (
-            <a
-              key={link}
-              href="#"
-              className="text-[10px] uppercase tracking-[0.15em] font-bold text-white/20 hover:text-white transition-all duration-300"
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            >
-              {link}
-            </a>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
-</footer>
-
-      {/* ── Modals ── */}
       {showHelpModal && (
-        <HelpModal t={t} onClose={() => setShowHelpModal(false)} />
+        <div className="fixed inset-0 z-[100] overflow-y-auto" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <HelpModal t={t} onClose={() => setShowHelpModal(false)} />
+        </div>
       )}
 
       {showModal && (
-        <ResultModal
-          t={t}
-          isWon={isWon}
-          nbTries={nbTries}
-          solution={solution}
-          guesses={guesses}
-          language={language}
-          stats={userStats}
-          user={user}
-          onLogin={handleLogin}
-          onClose={() => setShowModal(false)}
-        />
+        <div className="fixed inset-0 z-[100] overflow-y-auto" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <ResultModal
+            t={t}
+            isWon={isWon}
+            nbTries={nbTries}
+            solution={solution}
+            guesses={guesses}
+            language={language}
+            stats={userStats}
+            user={user}
+            onLogin={handleLogin}
+            onClose={() => setShowModal(false)}
+          />
+        </div>
       )}
 
       {showStatsModal && (
-        <StatsModal
-          t={t}
-          stats={userStats}
-          user={user}
-          onLogin={handleLogin}
-          onClose={() => setShowStatsModal(false)}
-        />
+        <div className="fixed inset-0 z-[100] overflow-y-auto" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <StatsModal
+            t={t}
+            stats={userStats}
+            user={user}
+            onLogin={handleLogin}
+            onClose={() => setShowStatsModal(false)}
+          />
+        </div>
       )}
     </div>
   )
