@@ -85,8 +85,8 @@ Si vous souhaitez faire tourner le projet en local / *If you want to run the pro
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/Enguer2/parolle-corsica.git]
-   cd parolle-corsica/parolle
+   git clone [https://github.com/Enguer2/parolle.git]
+   cd parolle/parolle
    ```
 
 2. **Install dependencies:**
